@@ -3,7 +3,8 @@
 
   const adapters = [
     new window.ChatGPTAdapter(),
-    new window.DoubaoAdapter()
+    new window.DoubaoAdapter(),
+    new window.GeminiAdapter()
   ];
 
   let activeAdapter = null;
