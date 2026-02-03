@@ -19,6 +19,13 @@
       ui = new window.SidebarUI(activeAdapter);
       ui.mount();
 
+      // Listen for toggle commands from the extension icon
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "TOGGLE_SIDEBAR" && ui) {
+          ui.toggleVisibility();
+        }
+      });
+
     } else {
       console.log("Chat Navigator: No compatible adapter found for this site.");
     }

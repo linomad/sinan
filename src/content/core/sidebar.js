@@ -92,6 +92,16 @@ class SidebarUI {
     }
   }
 
+  /**
+   * Completely hides or shows the sidebar (triggered by extension icon)
+   */
+  toggleVisibility() {
+    this.isVisible = !this.isVisible;
+    if (this.container) {
+      this.container.style.display = this.isVisible ? 'block' : 'none';
+    }
+  }
+
   updateMessages() {
     const messages = this.adapter.getUserMessages();
     const listContainer = this.shadowRoot.querySelector('.nav-list');
