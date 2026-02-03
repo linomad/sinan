@@ -47,7 +47,11 @@ class SidebarUI {
         });
     }, {
         root: null, // Use viewport
-        rootMargin: '-10% 0px -70% 0px', // Trigger when item is in the upper part of screen
+        // Adjust detection area:
+        // Activate when the element is in the middle-top part of the screen.
+        // -10% from top (ignore sticky headers)
+        // -50% from bottom (don't activate items that are just entering from bottom)
+        rootMargin: '-10% 0px -50% 0px', 
         threshold: 0
     });
 
@@ -67,7 +71,6 @@ class SidebarUI {
     items.forEach(item => {
         if (item.getAttribute('data-id') === id) {
             item.classList.add('active');
-            // Auto-scroll the sidebar list to keep active item in view
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
             item.classList.remove('active');
@@ -82,10 +85,10 @@ class SidebarUI {
     
     if (this.isCollapsed) {
         sidebar.classList.add('collapsed');
-        toggleBtn.innerHTML = '‹'; // Arrow pointing left
+        toggleBtn.innerHTML = '‹'; 
     } else {
         sidebar.classList.remove('collapsed');
-        toggleBtn.innerHTML = '›'; // Arrow pointing right (to close)
+        toggleBtn.innerHTML = '›'; 
     }
   }
 
@@ -109,8 +112,13 @@ class SidebarUI {
     this.shadowRoot.querySelectorAll('.nav-item').forEach(item => {
       item.onclick = () => {
         const id = item.getAttribute('data-id');
+        
+        // 1. Immediate visual feedback (Manual Override)
+        this.setActiveItem(id);
+        
         const target = document.getElementById(id);
         if (target) {
+          // 2. Perform scroll
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       };

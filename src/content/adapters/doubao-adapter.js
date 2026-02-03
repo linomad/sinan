@@ -42,8 +42,21 @@ class DoubaoAdapter extends BaseAdapter {
     const userElements = document.querySelectorAll('[data-testid="send_message"]');
 
     userElements.forEach((el, index) => {
-      if (!el.id) {
-        el.id = `chat-nav-user-msg-${index}`;
+      // Strategy: Use stable data-message-id if available, fallback to index
+      // Doubao puts data-message-id on the inner [data-testid="message_content"]
+      const contentEl = el.querySelector('[data-testid="message_content"]');
+      const stableId = contentEl ? contentEl.getAttribute('data-message-id') : null;
+      
+      // Construct a unique ID. 
+      // If we have a stable ID, use it (e.g. "chat-nav-uid-37123...").
+      // Otherwise fallback to index (e.g. "chat-nav-idx-0").
+      const navId = stableId ? `chat-nav-uid-${stableId}` : `chat-nav-idx-${index}`;
+
+      // CRITICAL: Enforce this ID on the DOM element.
+      // Because virtual lists/React might recycle elements or re-render them,
+      // we must ensure the DOM node has the ID we expect every time we parse it.
+      if (el.id !== navId) {
+        el.id = navId;
       }
 
       // Try to find the specific text content div for cleaner extraction
@@ -54,7 +67,7 @@ class DoubaoAdapter extends BaseAdapter {
 
       if (text) {
         messages.push({
-          id: el.id,
+          id: navId,
           text: text,
           element: el
         });

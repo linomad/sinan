@@ -22,7 +22,7 @@ To support multiple AI platforms (ChatGPT, Gemini, Doubao) in the future, the co
         *   `monitorChanges(callback)`: Sets up `MutationObserver` to detect new messages.
         *   `getScrollContainer()`: Identifies the scrollable element (document vs specific div).
 
-3.  **Content Script Entry (`src/content/main.js`)**:
+3.  **Content Script Entry (`src/content/content.js`)**:
     *   Detects the current URL.
     *   Instantiates the correct Adapter (e.g., `ChatGPTAdapter`).
     *   Initializes the Core Engine with that adapter.
@@ -30,50 +30,52 @@ To support multiple AI platforms (ChatGPT, Gemini, Doubao) in the future, the co
 ## 3. Implementation Phases & Tasks
 
 ### Phase 1: Infrastructure & Architecture Setup
-*   [ ] **Task 1.1: Project Restructuring**
+*   [x] **Task 1.1: Project Restructuring**
     *   Refactor `src/content` to have `adapters/` and `core/` directories.
     *   Create a base `ChatAdapter` class/interface.
-*   [ ] **Task 1.2: URL Detection & Router**
+*   [x] **Task 1.2: URL Detection & Router**
     *   Implement logic in `content.js` to check `window.location.hostname` and select the correct adapter.
 
 ### Phase 2: ChatGPT Adapter (The "Parser")
-*   [ ] **Task 2.1: DOM Analysis (ChatGPT)**
-    *   Identify stable selectors for "User" message blocks (e.g., `[data-message-author-role="user"]`).
-    *   Identify the text container within the message block.
-*   [ ] **Task 2.2: Data Extraction**
+*   [x] **Task 2.1: DOM Analysis (ChatGPT)**
+    *   Identify stable selectors for "User" message blocks (`[data-message-author-role="user"]`).
+*   [x] **Task 2.2: Data Extraction**
     *   Implement `ChatGPTAdapter.getUserMessages()` to return a list of DOM elements and their text preview.
-*   [ ] **Task 2.3: Real-time Monitoring**
+*   [x] **Task 2.3: Real-time Monitoring**
     *   Implement `MutationObserver` in the adapter to detect when a new message is sent/generated and trigger a UI update.
 
 ### Phase 3: UI & Core Logic (The "Navigator")
-*   [ ] **Task 3.1: Sidebar Container Injection**
-    *   Create a Shadow DOM (to avoid CSS conflicts) or a container `div` for the sidebar.
+*   [x] **Task 3.1: Sidebar Container Injection**
+    *   Create a Shadow DOM to isolate styles for the sidebar.
     *   Position it fixed on the right side.
-*   [ ] **Task 3.2: Message Rendering**
+*   [x] **Task 3.2: Message Rendering**
     *   Render the list of user messages extracted by the adapter.
-    *   **Truncation Logic**: Implement CSS text-overflow or JS-based truncation (e.g., first 50 chars).
-*   [ ] **Task 3.3: Scroll Interaction**
+    *   **Truncation Logic**: Use CSS line-clamp for smooth multi-line previews.
+*   [x] **Task 3.3: Scroll Interaction**
     *   Implement `scrollToMessage(element)` using `element.scrollIntoView({ behavior: 'smooth', block: 'center' })`.
-*   [ ] **Task 3.4: Auto-Highlighting (Scroll Spy)**
-    *   Use `IntersectionObserver` to detect which message is currently in the viewport and highlight the corresponding dot/text in the sidebar.
+*   [x] **Task 3.4: Auto-Highlighting (Scroll Spy)**
+    *   Use `IntersectionObserver` to detect which message is currently in the viewport and highlight the corresponding item in the sidebar.
 
 ### Phase 4: Refinement & Styling
-*   [ ] **Task 4.1: Styling (CSS)**
-    *   Design a "Glassmorphism" or clean minimalist look (Translucent background, rounded corners).
-    *   Ensure it doesn't overlap critical ChatGPT UI buttons (like the input box or history).
-*   [ ] **Task 4.2: Toggle Visibility**
+*   [x] **Task 4.1: Styling (CSS)**
+    *   Design a "Glassmorphism" look (Translucent background, blur effect, rounded corners).
+*   [x] **Task 4.2: Toggle Visibility**
     *   Add a minimize/collapse button to the sidebar.
-*   [ ] **Task 4.3: Smoothness Optimization**
-    *   Debounce the MutationObserver updates to prevent UI flickering during generation.
+*   [x] **Task 4.3: Smoothness Optimization**
+    *   Debounce the MutationObserver updates.
+    *   Refine Scroll Spy triggering thresholds.
 
-### Phase 5: Future Expansion (Gemini & Doubao)
+### Phase 5: Multi-site Support (Gemini & Doubao)
 *   [ ] Create `GeminiAdapter`.
-*   [ ] Create `DoubaoAdapter`.
-*   [ ] (No changes needed to Core Engine).
+*   [x] Create `DoubaoAdapter`.
+    *   [x] Implemented using `[data-testid="send_message"]`.
+    *   [x] Solved lazy-loading ID stability using `data-message-id`.
 
 ## 4. Technical Constraints & Risks
-*   **DOM Fragility**: ChatGPT changes class names often (e.g., tailwind classes). We must rely on stable attributes like `data-message-author-role` or structural hierarchy where possible.
-*   **SPA Navigation**: When switching chats in ChatGPT, the page doesn't reload. We need to listen to URL changes or major DOM resets to re-initialize the list.
+*   **DOM Fragility**: Sites change class names often. We rely on stable attributes like `data-message-author-role` or `data-testid`.
+*   **SPA Navigation**: ChatGPT/Doubao change URLs without a full reload. We listen to URL changes to re-initialize.
+*   **Virtual Lists**: Sites like Doubao only render visible items. We handle this by using stable unique IDs from the data attributes.
 
-## 5. Next Step
-Proceed to **Phase 1: Infrastructure & Architecture Setup**.
+## 5. Current Status
+Completed Phase 4 and added support for Doubao in Phase 5.
+Proceeding to **Phase 5: Gemini Support** or further UX polish.
