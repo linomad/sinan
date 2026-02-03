@@ -2,7 +2,8 @@
   console.log("Chat Navigator: Content script started.");
 
   const adapters = [
-    new window.ChatGPTAdapter()
+    new window.ChatGPTAdapter(),
+    new window.DoubaoAdapter()
   ];
 
   let activeAdapter = null;

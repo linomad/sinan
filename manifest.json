@@ -25,6 +25,7 @@
       "js": [
         "src/content/adapters/base-adapter.js",
         "src/content/adapters/chatgpt-adapter.js",
+        "src/content/adapters/doubao-adapter.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
       ],
