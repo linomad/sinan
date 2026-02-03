@@ -3,43 +3,41 @@
 
   const adapters = [
     new window.ChatGPTAdapter()
-    // Future: new window.GeminiAdapter(),
-    // Future: new window.DoubaoAdapter()
   ];
 
   let activeAdapter = null;
+  let ui = null;
 
   function init() {
-    // specific check for chatgpt
-    if (window.location.hostname.includes('chatgpt.com')) {
-      // It is chatgpt, let's look for the adapter
-      activeAdapter = adapters.find(a => a.domain === 'chatgpt.com');
-    } else {
-       // Generic check
-       activeAdapter = adapters.find(adapter => adapter.isCompatible());
-    }
+    activeAdapter = adapters.find(adapter => adapter.isCompatible());
 
     if (activeAdapter) {
       console.log(`Chat Navigator: Activated ${activeAdapter.constructor.name}`);
       
-      // Temporary Verification for Phase 2:
-      // Check for messages every 3 seconds and log them
-      setInterval(() => {
-          const msgs = activeAdapter.getUserMessages();
-          console.log(`[ChatNav Debug] Found ${msgs.length} user messages:`, msgs.map(m => m.text.substring(0, 20) + '...'));
-      }, 3000);
-
-      // Start observing (Phase 2 requirement)
-      activeAdapter.observeMutations(() => {
-          console.log("[ChatNav Debug] DOM changed, ready to update UI.");
-      });
+      // Initialize UI
+      ui = new window.SidebarUI(activeAdapter);
+      ui.mount();
 
     } else {
       console.log("Chat Navigator: No compatible adapter found for this site.");
     }
   }
 
-  // Wait for page to be reasonably loaded
+  // Use a more robust check for single-page app (SPA) navigation
+  // ChatGPT might change URLs without a full reload
+  let lastUrl = location.href;
+  new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      console.log("Chat Navigator: URL changed, re-initializing...");
+      if (ui && ui.container) {
+          ui.container.remove();
+      }
+      init();
+    }
+  }).observe(document, {subtree: true, childList: true});
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

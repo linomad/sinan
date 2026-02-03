@@ -10,14 +10,25 @@
   "background": {
     "service_worker": "src/background/background.js"
   },
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://www.doubao.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://www.doubao.com/*"
+      ],
       "js": [
         "src/content/adapters/base-adapter.js",
         "src/content/adapters/chatgpt-adapter.js",
+        "src/content/core/sidebar.js",
         "src/content/content.js"
-      ]
+      ],
+      "run_at": "document_idle"
     }
   ]
 }
