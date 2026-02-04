@@ -6,7 +6,8 @@
     new window.DoubaoAdapter(),
     new window.GeminiAdapter(),
     new window.QwenAdapter(),
-    new window.PerplexityAdapter()
+    new window.PerplexityAdapter(),
+    new window.KimiAdapter()
   ];
 
   let activeAdapter = null;

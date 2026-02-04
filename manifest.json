@@ -23,7 +23,10 @@
     "https://gemini.google.com/*",
     "https://www.doubao.com/*",
     "https://chat.qwen.ai/*",
-    "https://www.perplexity.ai/*"
+    "https://www.perplexity.ai/*",
+    "https://kimi.moonshot.cn/*",
+    "https://www.kimi.com/*",
+    "https://kimi.com/*"
   ],
   "content_scripts": [
     {
@@ -32,7 +35,10 @@
         "https://gemini.google.com/*",
         "https://www.doubao.com/*",
         "https://chat.qwen.ai/*",
-        "https://www.perplexity.ai/*"
+        "https://www.perplexity.ai/*",
+        "https://kimi.moonshot.cn/*",
+        "https://www.kimi.com/*",
+        "https://kimi.com/*"
       ],
       "js": [
         "src/content/utils/hash-utils.js",
@@ -42,6 +48,7 @@
         "src/content/adapters/gemini-adapter.js",
         "src/content/adapters/qwen-adapter.js",
         "src/content/adapters/perplexity-adapter.js",
+        "src/content/adapters/kimi-adapter.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
       ],
