@@ -304,6 +304,12 @@ class SidebarUI {
           color: var(--primary-color);
         }
 
+        /* Fix: Don't change toggle btn background when sidebar is collapsed and hovered */
+        #sidebar.collapsed .toggle-btn:hover {
+          background: transparent;
+          color: #fff;
+        }
+
         .nav-list {
           overflow-y: overlay;
           padding: 8px;
