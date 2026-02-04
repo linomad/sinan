@@ -72,7 +72,7 @@ class SidebarUI {
     const docEl = document.documentElement;
     const bodyEl = document.body;
 
-    // Strategy 1: Check standard classes "dark" or "dark-theme" (Gemini uses dark-theme)
+    // 1. Check standard dark classes
     if (docEl.classList.contains('dark') || 
         bodyEl.classList.contains('dark') ||
         docEl.classList.contains('dark-theme') || 
@@ -80,14 +80,25 @@ class SidebarUI {
       return true;
     }
     
-    // Strategy 2: Check data-theme or data-color-scheme attributes
+    // 2. Check standard light classes (If explicitly light, don't fallback to system dark)
+    if (docEl.classList.contains('light') || 
+        bodyEl.classList.contains('light') ||
+        docEl.classList.contains('light-theme') || 
+        bodyEl.classList.contains('light-theme')) {
+      return false;
+    }
+
+    // 3. Check data-theme or data-color-scheme attributes
     const htmlTheme = docEl.getAttribute('data-theme');
     const bodyTheme = bodyEl.getAttribute('data-theme');
     const colorScheme = docEl.getAttribute('data-color-scheme') || bodyEl.getAttribute('data-color-scheme');
     
-    if (htmlTheme === 'dark' || bodyTheme === 'dark' || colorScheme === 'dark') return true;
+    // If any theme attribute exists, respect it and skip fallback
+    if (htmlTheme || bodyTheme || colorScheme) {
+      return htmlTheme === 'dark' || bodyTheme === 'dark' || colorScheme === 'dark';
+    }
 
-    // Fallback: System preference
+    // 4. Fallback: System preference (only if no explicit page theme indicators found)
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
