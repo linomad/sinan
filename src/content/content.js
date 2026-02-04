@@ -4,7 +4,8 @@
   const adapters = [
     new window.ChatGPTAdapter(),
     new window.DoubaoAdapter(),
-    new window.GeminiAdapter()
+    new window.GeminiAdapter(),
+    new window.QwenAdapter()
   ];
 
   let activeAdapter = null;

@@ -11,20 +11,23 @@
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://www.doubao.com/*"
+    "https://www.doubao.com/*",
+    "https://chat.qwen.ai/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com/*",
         "https://gemini.google.com/*",
-        "https://www.doubao.com/*"
+        "https://www.doubao.com/*",
+        "https://chat.qwen.ai/*"
       ],
       "js": [
         "src/content/adapters/base-adapter.js",
         "src/content/adapters/chatgpt-adapter.js",
         "src/content/adapters/doubao-adapter.js",
         "src/content/adapters/gemini-adapter.js",
+        "src/content/adapters/qwen-adapter.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
       ],
