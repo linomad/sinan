@@ -33,9 +33,8 @@ class GeminiAdapter extends BaseAdapter {
     // Strategy 3: Heuristic based on message containers without model actions
     // (Fallback if specific tags change)
     if (userElements.length === 0) {
-        // This is risky, so we stick to 1 & 2 for now. 
-        // If 1 & 2 fail, we might return empty and log a warning.
-        console.warn("GeminiAdapter: No user messages found with standard selectors.");
+        // Just return empty, no need to warn as it happens on new chats
+        return [];
     }
 
     userElements.forEach((el, index) => {
