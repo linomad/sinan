@@ -5,7 +5,8 @@
     new window.ChatGPTAdapter(),
     new window.DoubaoAdapter(),
     new window.GeminiAdapter(),
-    new window.QwenAdapter()
+    new window.QwenAdapter(),
+    new window.PerplexityAdapter()
   ];
 
   let activeAdapter = null;
