@@ -190,7 +190,7 @@ class SidebarUI {
         let target = msg.element && msg.element.isConnected ? msg.element : document.getElementById(id);
         
         if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          this.adapter.scrollToElement(target);
         }
       };
     });

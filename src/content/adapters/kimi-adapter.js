@@ -18,9 +18,15 @@ class KimiAdapter extends BaseAdapter {
   }
 
   getScrollContainer() {
-    // Based on the HTML structure provided, the chat container seems to be #chat-container or .chat-content-container
-    // We'll try to find the scrollable area.
-    return document.querySelector('#chat-container') || document.documentElement;
+    // .layout-content-main seems to be the scrollable area based on structure
+    return document.querySelector('.layout-content-main') || document.querySelector('#chat-container') || document.documentElement;
+  }
+
+  scrollToElement(element) {
+    if (!element) return;
+    // Kimi seems to have issues with smooth scrolling or finding the target sometimes.
+    // We try 'center' block alignment.
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   /**

@@ -53,6 +53,16 @@ class BaseAdapter {
     observer.observe(document.body, { childList: true, subtree: true });
     return observer;
   }
+
+  /**
+   * Scrolls the element into view.
+   * Adapters can override this to handle specific scrolling quirks (e.g. fixed headers, virtual scrolling).
+   * @param {HTMLElement} element 
+   */
+  scrollToElement(element) {
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 // Make it available globally so other scripts can extend it
