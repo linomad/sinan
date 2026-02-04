@@ -373,7 +373,7 @@ class SidebarUI {
       </style>
       <div id="sidebar">
         <div class="header">
-          <span>Navigator</span>
+          <span>Sinan</span>
           <div class="toggle-btn" title="Toggle Sidebar">›</div>
         </div>
         <div class="nav-list">

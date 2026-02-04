@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Chrome Extension",
+  "name": "Sinan (司南)",
   "version": "1.0.0",
-  "description": "A basic Chrome extension starter.",
+  "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "permissions": ["storage", "activeTab"],
   "action": {},
   "background": {
