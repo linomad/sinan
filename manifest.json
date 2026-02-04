@@ -3,8 +3,19 @@
   "name": "Sinan (司南)",
   "version": "1.0.0",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
   "permissions": ["storage", "activeTab"],
-  "action": {},
+  "action": {
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
   "background": {
     "service_worker": "src/background/background.js"
   },
