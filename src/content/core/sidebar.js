@@ -180,11 +180,15 @@ class SidebarUI {
       </div>
     `).join('');
 
-    this.shadowRoot.querySelectorAll('.nav-item').forEach(item => {
+    this.shadowRoot.querySelectorAll('.nav-item').forEach((item, index) => {
       item.onclick = () => {
+        const msg = messages[index];
         const id = item.getAttribute('data-id');
         this.setActiveItem(id);
-        const target = document.getElementById(id);
+        
+        // Prioritize the element reference if valid and connected
+        let target = msg.element && msg.element.isConnected ? msg.element : document.getElementById(id);
+        
         if (target) {
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
