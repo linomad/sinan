@@ -69,19 +69,22 @@ class SidebarUI {
   }
 
   detectDarkMode() {
-    // Strategy 1: Check standard class "dark" (Tailwind/ChatGPT usually)
-    if (document.documentElement.classList.contains('dark') || document.body.classList.contains('dark')) {
+    const docEl = document.documentElement;
+    const bodyEl = document.body;
+
+    // Strategy 1: Check standard classes "dark" or "dark-theme" (Gemini uses dark-theme)
+    if (docEl.classList.contains('dark') || 
+        bodyEl.classList.contains('dark') ||
+        docEl.classList.contains('dark-theme') || 
+        bodyEl.classList.contains('dark-theme')) {
       return true;
     }
-    // Strategy 2: Check data-theme attributes (Doubao, DaisyUI, etc.)
-    const htmlTheme = document.documentElement.getAttribute('data-theme');
-    const bodyTheme = document.body.getAttribute('data-theme');
+    
+    // Strategy 2: Check data-theme attributes
+    const htmlTheme = docEl.getAttribute('data-theme');
+    const bodyTheme = bodyEl.getAttribute('data-theme');
     if (htmlTheme === 'dark' || bodyTheme === 'dark') return true;
 
-    // Strategy 3: Check computed background color (Heavy heuristic, but reliable)
-    // If the body background is dark, we assume dark mode.
-    // (Optional optimization: only run this if classes fail)
-    
     // Fallback: System preference
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
