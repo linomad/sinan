@@ -30,23 +30,27 @@ class KimiAdapter extends BaseAdapter {
     const messages = [];
     const userElements = document.querySelectorAll('.chat-content-item-user');
 
-    userElements.forEach((el, index) => {
-      if (!el.id) {
-        el.id = `chat-nav-user-msg-${index}`;
-      }
-
+    userElements.forEach((el) => {
       // The text content is inside .user-content based on the provided HTML
       const contentEl = el.querySelector('.user-content');
       let text = contentEl ? contentEl.innerText : "";
       text = text.trim().replace(/\n+/g, " ");
 
-      if (text) {
-        messages.push({
-          id: el.id,
-          text: text, // Raw text, UI will handle truncation
-          element: el
-        });
+      if (!text) return;
+
+      // Use text hash for stable ID, preventing issues when DOM updates
+      const hash = window.ChatNavUtils.hashCode(text);
+      const navId = `chat-nav-kimi-${hash}`;
+
+      if (el.id !== navId) {
+        el.id = navId;
       }
+
+      messages.push({
+        id: navId,
+        text: text, // Raw text, UI will handle truncation
+        element: el
+      });
     });
 
     return messages;
