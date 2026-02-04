@@ -26,7 +26,8 @@
     "https://www.perplexity.ai/*",
     "https://kimi.moonshot.cn/*",
     "https://www.kimi.com/*",
-    "https://kimi.com/*"
+    "https://kimi.com/*",
+    "https://yuanbao.tencent.com/*"
   ],
   "content_scripts": [
     {
@@ -38,7 +39,8 @@
         "https://www.perplexity.ai/*",
         "https://kimi.moonshot.cn/*",
         "https://www.kimi.com/*",
-        "https://kimi.com/*"
+        "https://kimi.com/*",
+        "https://yuanbao.tencent.com/*"
       ],
       "js": [
         "src/content/utils/hash-utils.js",
@@ -49,6 +51,7 @@
         "src/content/adapters/qwen-adapter.js",
         "src/content/adapters/perplexity-adapter.js",
         "src/content/adapters/kimi-adapter.js",
+        "src/content/adapters/yuanbao-adapter.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
       ],
