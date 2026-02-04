@@ -80,10 +80,12 @@ class SidebarUI {
       return true;
     }
     
-    // Strategy 2: Check data-theme attributes
+    // Strategy 2: Check data-theme or data-color-scheme attributes
     const htmlTheme = docEl.getAttribute('data-theme');
     const bodyTheme = bodyEl.getAttribute('data-theme');
-    if (htmlTheme === 'dark' || bodyTheme === 'dark') return true;
+    const colorScheme = docEl.getAttribute('data-color-scheme') || bodyEl.getAttribute('data-color-scheme');
+    
+    if (htmlTheme === 'dark' || bodyTheme === 'dark' || colorScheme === 'dark') return true;
 
     // Fallback: System preference
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -25,6 +25,7 @@
         "https://www.perplexity.ai/*"
       ],
       "js": [
+        "src/content/utils/hash-utils.js",
         "src/content/adapters/base-adapter.js",
         "src/content/adapters/chatgpt-adapter.js",
         "src/content/adapters/doubao-adapter.js",

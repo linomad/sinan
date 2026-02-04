@@ -25,29 +25,31 @@ class PerplexityAdapter extends BaseAdapter {
 
   getUserMessages() {
     const messages = [];
-    // User provided selector: "group/query"
-    // Since "/" is a special character in CSS selectors, we use attribute selector for safety
-    // or exact class match if we are sure.
-    // The class is likely part of a list, e.g. "relative group/query ..."
     const userElements = document.querySelectorAll('[class*="group/query"]');
 
-    userElements.forEach((el, index) => {
-      if (!el.id) {
-        el.id = `chat-nav-user-msg-${index}`;
-      }
-
-      // Extract text. 
-      // Perplexity queries are usually concise.
+    userElements.forEach((el) => {
+      // Extract text first
       let text = el.innerText || "";
       text = text.trim().replace(/\n+/g, " ");
+      
+      if (!text) return;
 
-      if (text) {
-        messages.push({
-          id: el.id,
-          text: text,
-          element: el
-        });
+      // Strategy: Use text content hash as stable ID.
+      // Perplexity doesn't expose a stable message-id in the DOM easily.
+      // Since user queries are unique in context usually, a hash of the text works well.
+      const hash = window.ChatNavUtils.hashCode(text);
+      const navId = `chat-nav-pplx-${hash}`;
+
+      // Enforce this ID on the DOM element for the Scroll Spy to work
+      if (el.id !== navId) {
+        el.id = navId;
       }
+
+      messages.push({
+        id: navId,
+        text: text,
+        element: el
+      });
     });
 
     return messages;
