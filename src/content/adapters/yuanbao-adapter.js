@@ -17,6 +17,11 @@ class YuanbaoAdapter extends BaseAdapter {
     return document.querySelector('.agent-chat__list__content') || document.documentElement;
   }
 
+  scrollToElement(element) {
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   /**
    * Extracts user messages.
    */
@@ -25,24 +30,27 @@ class YuanbaoAdapter extends BaseAdapter {
     // User query selector: .agent-chat__list__item--human
     const userElements = document.querySelectorAll('.agent-chat__list__item--human');
 
-    userElements.forEach((el, index) => {
-      if (!el.id) {
-        el.id = `chat-nav-user-msg-${index}`;
-      }
-
+    userElements.forEach((el) => {
       // Text content selector: .hyc-content-text
       const contentEl = el.querySelector('.hyc-content-text');
       let text = contentEl ? contentEl.innerText : "";
-      
       text = text.trim().replace(/\n+/g, " ");
 
-      if (text) {
-        messages.push({
-          id: el.id,
-          text: text,
-          element: el
-        });
+      if (!text) return;
+
+      // Use text hash for stable ID
+      const hash = window.ChatNavUtils.hashCode(text);
+      const navId = `chat-nav-yuanbao-${hash}`;
+
+      if (el.id !== navId) {
+        el.id = navId;
       }
+
+      messages.push({
+        id: navId,
+        text: text,
+        element: el
+      });
     });
 
     return messages;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sinan (司南)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "icons": {
     "16": "assets/icon.png",
@@ -24,9 +24,6 @@
     "https://www.doubao.com/*",
     "https://chat.qwen.ai/*",
     "https://www.perplexity.ai/*",
-    "https://kimi.moonshot.cn/*",
-    "https://www.kimi.com/*",
-    "https://kimi.com/*",
     "https://yuanbao.tencent.com/*"
   ],
   "content_scripts": [
@@ -37,9 +34,6 @@
         "https://www.doubao.com/*",
         "https://chat.qwen.ai/*",
         "https://www.perplexity.ai/*",
-        "https://kimi.moonshot.cn/*",
-        "https://www.kimi.com/*",
-        "https://kimi.com/*",
         "https://yuanbao.tencent.com/*"
       ],
       "js": [
@@ -50,7 +44,6 @@
         "src/content/adapters/gemini-adapter.js",
         "src/content/adapters/qwen-adapter.js",
         "src/content/adapters/perplexity-adapter.js",
-        "src/content/adapters/kimi-adapter.js",
         "src/content/adapters/yuanbao-adapter.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
