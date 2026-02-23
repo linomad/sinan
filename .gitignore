@@ -2,3 +2,7 @@
 node_modules/
 dist/
 .env
+.gemini-clipboard/
+*_example.html
+*_issue.html
+assets/icon__.png

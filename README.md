@@ -24,3 +24,17 @@ If you need to generate a matching icon, use the following prompt:
 2. Open Chrome and go to `chrome://extensions/`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked** and select the extension folder.
+
+## 📦 Chrome Web Store Packaging
+
+Use the build script instead of zipping the project root directly:
+
+```bash
+chmod +x scripts/check_remote_hosted_code.sh scripts/build_webstore_package.sh
+./scripts/build_webstore_package.sh
+```
+
+It will:
+- Copy only Git-tracked extension runtime files (`manifest.json`, `src/`, `assets/`) into `dist/webstore-package/`.
+- Run a remote-hosted-code scan for MV3 compliance.
+- Output upload artifact at `dist/sinan-webstore.zip`.
