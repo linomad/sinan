@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Sinan icon transparent">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d2443"/>
+      <stop offset="100%" stop-color="#122948"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent canvas, no outer background and no border -->
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#panel)"/>
+
+  <text
+    x="60"
+    y="99"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="#ffffff"
+    font-size="96"
+    font-style="italic"
+    font-weight="800"
+    font-family="Arial Black, Helvetica Neue, Helvetica, Arial, sans-serif"
+    transform="rotate(-2 64 64)"
+  >S</text>
+</svg>
