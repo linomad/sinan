@@ -20,6 +20,14 @@ If you need to generate a matching icon, use the following prompt:
 
 ## 🚀 Installation
 
+**Recommended: Install from the Chrome Web Store**
+
+For the best experience (easy setup + automatic updates), install Sinan directly from the Chrome Web Store:  
+建议优先通过 Chrome Web Store 安装，流程更简单且可自动获取更新。  
+[Sinan (司南) - Chrome Web Store](https://chromewebstore.google.com/detail/sinan-%E5%8F%B8%E5%8D%97/khififjmhndmolbpabmaidlkfpjdmejk?hl=en-US&utm_source=ext_sidebar)
+
+**Local development install (optional)**
+
 1. Clone or download this repository.
 2. Open Chrome and go to `chrome://extensions/`.
 3. Enable **Developer mode**.
