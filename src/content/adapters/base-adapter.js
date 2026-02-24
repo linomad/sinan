@@ -42,6 +42,25 @@ class BaseAdapter {
   }
 
   /**
+   * Extracts assistant messages from the DOM.
+   * @returns {Array<{id: string, text: string, element: HTMLElement}>}
+   */
+  getAssistantMessages() {
+    return [];
+  }
+
+  /**
+   * Returns conversation turns where each user message is paired with
+   * assistant message(s) until the next user message appears.
+   * @returns {Array<{id: string, user: Object, assistant: Object|null, assistantSegments: Array<Object>, assistantText: string}>}
+   */
+  getConversationTurns() {
+    const userMessages = this.getUserMessages();
+    const assistantMessages = this.getAssistantMessages();
+    return BaseAdapter.pairMessagesByOrder(userMessages, assistantMessages);
+  }
+
+  /**
    * Sets up an observer to detect new messages.
    * @param {Function} callback - Called when DOM changes
    */
@@ -62,6 +81,118 @@ class BaseAdapter {
   scrollToElement(element) {
     if (!element) return;
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /**
+   * Pairs user and assistant messages in timeline order.
+   * Prefers DOM order comparison and falls back to index pairing when
+   * ordering information is not available.
+   * @param {Array<Object>} userMessages
+   * @param {Array<Object>} assistantMessages
+   * @returns {Array<{id: string, user: Object, assistant: Object|null, assistantSegments: Array<Object>, assistantText: string}>}
+   */
+  static pairMessagesByOrder(userMessages, assistantMessages) {
+    const users = Array.isArray(userMessages) ? userMessages.filter(Boolean) : [];
+    const assistants = Array.isArray(assistantMessages) ? assistantMessages.filter(Boolean) : [];
+
+    if (users.length === 0) return [];
+
+    if (!BaseAdapter.canUseOrderPairing(users, assistants)) {
+      return users.map((user, index) => {
+        const assistant = assistants[index];
+        const segments = assistant ? [assistant] : [];
+        return BaseAdapter.buildTurn(user, segments);
+      });
+    }
+
+    const turns = [];
+    let assistantCursor = 0;
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const nextUser = users[i + 1] || null;
+      const segments = [];
+
+      while (assistantCursor < assistants.length) {
+        const candidate = assistants[assistantCursor];
+
+        // Skip assistant nodes that appear before the current user turn.
+        if (!BaseAdapter.isMessageBefore(user, candidate)) {
+          assistantCursor += 1;
+          continue;
+        }
+
+        // Once we reach the next user message, this turn is complete.
+        if (nextUser && !BaseAdapter.isMessageBefore(candidate, nextUser)) {
+          break;
+        }
+
+        segments.push(candidate);
+        assistantCursor += 1;
+      }
+
+      turns.push(BaseAdapter.buildTurn(user, segments));
+    }
+
+    return turns;
+  }
+
+  static buildTurn(userMessage, assistantSegments) {
+    const user = BaseAdapter.normalizeMessage(userMessage);
+    const segments = (assistantSegments || []).map(BaseAdapter.normalizeMessage);
+    const assistantText = segments
+      .map(segment => segment.text)
+      .filter(Boolean)
+      .join('\n\n');
+
+    return {
+      id: user.id,
+      user,
+      assistant: segments[0] || null,
+      assistantSegments: segments,
+      assistantText
+    };
+  }
+
+  static normalizeMessage(message) {
+    if (!message) return { id: '', text: '', element: null };
+    return {
+      ...message,
+      text: BaseAdapter.normalizeText(message.text)
+    };
+  }
+
+  static normalizeText(text) {
+    return (text || '').trim().replace(/\n+/g, '\n');
+  }
+
+  static canUseOrderPairing(users, assistants) {
+    if (assistants.length === 0) return true;
+    return users.every(BaseAdapter.hasComparableAnchor) && assistants.every(BaseAdapter.hasComparableAnchor);
+  }
+
+  static hasComparableAnchor(message) {
+    if (!message) return false;
+    if (typeof message.order === 'number') return true;
+    return !!(message.element && typeof message.element.compareDocumentPosition === 'function');
+  }
+
+  static isMessageBefore(left, right) {
+    if (!left || !right) return false;
+
+    if (typeof left.order === 'number' && typeof right.order === 'number') {
+      return left.order < right.order;
+    }
+
+    if (!left.element || !right.element || typeof left.element.compareDocumentPosition !== 'function') {
+      return false;
+    }
+
+    const nodeType = typeof Node !== 'undefined'
+      ? Node
+      : (typeof window !== 'undefined' ? window.Node : null);
+    const followingMask = nodeType ? nodeType.DOCUMENT_POSITION_FOLLOWING : 4;
+    return !!(left.element.compareDocumentPosition(right.element) & followingMask);
   }
 }
 

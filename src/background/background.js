@@ -9,7 +9,8 @@ chrome.action.onClicked.addListener((tab) => {
     'gemini.google.com',
     'doubao.com',
     'chat.qwen.ai',
-    'perplexity.ai'
+    'perplexity.ai',
+    'yuanbao.tencent.com'
   ];
 
   const isSupported = supportedDomains.some(domain => tab.url.includes(domain));

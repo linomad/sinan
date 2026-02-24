@@ -77,6 +77,36 @@ class DoubaoAdapter extends BaseAdapter {
     return messages;
   }
 
+  getAssistantMessages() {
+    const messages = [];
+    const assistantElements = document.querySelectorAll('[data-testid="receive_message"]');
+
+    assistantElements.forEach((el, index) => {
+      const contentEl = el.querySelector('[data-testid="message_content"]');
+      const stableId = contentEl ? contentEl.getAttribute('data-message-id') : null;
+      const navId = stableId ? `chat-nav-assistant-uid-${stableId}` : `chat-nav-assistant-idx-${index}`;
+
+      if (el.id !== navId) {
+        el.id = navId;
+      }
+
+      const textEl = el.querySelector('[data-testid="message_text_content"]');
+      let text = textEl ? textEl.innerText : el.innerText;
+      text = (text || "").trim().replace(/\n+/g, " ");
+
+      if (text) {
+        messages.push({
+          id: navId,
+          text,
+          html: textEl ? (textEl.innerHTML || '') : '',
+          element: el
+        });
+      }
+    });
+
+    return messages;
+  }
+
   observeMutations(callback) {
     if (this.observer) this.observer.disconnect();
     
@@ -89,6 +119,8 @@ class DoubaoAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

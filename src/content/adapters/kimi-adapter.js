@@ -76,6 +76,8 @@ class KimiAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

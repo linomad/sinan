@@ -14,22 +14,32 @@
   let activeAdapter = null;
   let ui = null;
 
+  function handleRuntimeMessage(request) {
+    if (request.action === "TOGGLE_SIDEBAR" && ui) {
+      ui.toggleVisibility();
+    }
+  }
+
   function init() {
     activeAdapter = adapters.find(adapter => adapter.isCompatible());
 
     if (activeAdapter) {
       console.log(`Chat Navigator: Activated ${activeAdapter.constructor.name}`);
       
+      if (ui) {
+        ui.destroy();
+      }
+
       // Initialize UI
       ui = new window.SidebarUI(activeAdapter);
       ui.mount();
 
-      // Listen for toggle commands from the extension icon
-      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === "TOGGLE_SIDEBAR" && ui) {
-          ui.toggleVisibility();
-        }
-      });
+      // Register only once to avoid duplicate handlers across SPA route switches.
+      const hasListener = chrome.runtime.onMessage.hasListener
+        && chrome.runtime.onMessage.hasListener(handleRuntimeMessage);
+      if (!hasListener) {
+        chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+      }
 
     } else {
       console.log("Chat Navigator: No compatible adapter found for this site.");
@@ -44,9 +54,11 @@
     if (url !== lastUrl) {
       lastUrl = url;
       console.log("Chat Navigator: URL changed, re-initializing...");
-      if (ui && ui.container) {
-          ui.container.remove();
+      if (ui) {
+          ui.destroy();
+          ui = null;
       }
+      activeAdapter = null;
       init();
     }
   }).observe(document, {subtree: true, childList: true});

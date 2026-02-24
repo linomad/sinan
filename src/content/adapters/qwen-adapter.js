@@ -58,6 +58,33 @@ class QwenAdapter extends BaseAdapter {
     return messages;
   }
 
+  getAssistantMessages() {
+    const messages = [];
+    const assistantElements = document.querySelectorAll(
+      '.qwen-chat-message-assistant, .qwen-chat-message-bot, [class*="qwen-chat-message-assistant"]'
+    );
+
+    assistantElements.forEach((el, index) => {
+      if (!el.id) {
+        el.id = `chat-nav-assistant-msg-${index}`;
+      }
+
+      let text = el.innerText || "";
+      text = text.trim().replace(/\n+/g, " ");
+
+      if (text) {
+        messages.push({
+          id: el.id,
+          text,
+          html: el.innerHTML || '',
+          element: el
+        });
+      }
+    });
+
+    return messages;
+  }
+
   observeMutations(callback) {
     if (this.observer) this.observer.disconnect();
     
@@ -70,6 +97,8 @@ class QwenAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

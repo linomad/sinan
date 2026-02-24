@@ -45,6 +45,9 @@
         "src/content/adapters/qwen-adapter.js",
         "src/content/adapters/perplexity-adapter.js",
         "src/content/adapters/yuanbao-adapter.js",
+        "src/content/vendor/turndown.js",
+        "src/content/vendor/turndown-plugin-gfm.js",
+        "src/content/core/export-service.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"
       ],

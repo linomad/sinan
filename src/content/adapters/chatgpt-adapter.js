@@ -47,6 +47,32 @@ class ChatGPTAdapter extends BaseAdapter {
     return messages;
   }
 
+  getAssistantMessages() {
+    const messages = [];
+    const assistantElements = document.querySelectorAll('[data-message-author-role="assistant"]');
+
+    assistantElements.forEach((el, index) => {
+      if (!el.id) {
+        el.id = `chat-nav-assistant-msg-${index}`;
+      }
+
+      const contentEl = el.querySelector('.markdown, [data-message-content], [class*="prose"]') || el;
+      let text = contentEl.innerText || "";
+      text = text.trim().replace(/\n+/g, " ");
+
+      if (text) {
+        messages.push({
+          id: el.id,
+          text,
+          html: contentEl.innerHTML || '',
+          element: el
+        });
+      }
+    });
+
+    return messages;
+  }
+
   observeMutations(callback) {
     if (this.observer) this.observer.disconnect();
     
@@ -59,6 +85,8 @@ class ChatGPTAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

@@ -47,33 +47,71 @@ class GeminiAdapter extends BaseAdapter {
         el.id = `chat-nav-user-msg-${index}`;
       }
 
-      // Extract text
-      // Often in: .query-text or just the text content excluding buttons
-      let text = "";
-      const textContainer = el.querySelector('.query-text') || el.querySelector('p');
-      
-      if (textContainer) {
-          text = textContainer.innerText;
-      } else {
-          // Fallback: Clone and remove known junk (buttons)
-          const clone = el.cloneNode(true);
-          const junk = clone.querySelectorAll('button, mat-icon');
-          junk.forEach(j => j.remove());
-          text = clone.innerText;
-      }
-
-      text = (text || "").trim().replace(/\n+/g, " ");
+      const payload = this.extractMessagePayload(el, ['.query-text', 'p']);
+      const text = payload.text;
 
       if (text) {
         messages.push({
           id: el.id,
           text: text,
+          html: payload.html,
           element: el
         });
       }
     });
 
     return messages;
+  }
+
+  getAssistantMessages() {
+    const messages = [];
+
+    let assistantElements = document.querySelectorAll('model-response');
+    if (assistantElements.length === 0) {
+      assistantElements = document.querySelectorAll('[data-test-id="model-response"]');
+    }
+
+    assistantElements.forEach((el, index) => {
+      if (!el.id) {
+        el.id = `chat-nav-assistant-msg-${index}`;
+      }
+
+      const payload = this.extractMessagePayload(el, ['.markdown', '.response-content', 'p']);
+      const text = payload.text;
+      if (text) {
+        messages.push({
+          id: el.id,
+          text,
+          html: payload.html,
+          element: el
+        });
+      }
+    });
+
+    return messages;
+  }
+
+  extractMessagePayload(element, preferredSelectors = []) {
+    for (const selector of preferredSelectors) {
+      const match = element.querySelector(selector);
+      if (match && match.innerText) {
+        const cleaned = match.innerText.trim().replace(/\n+/g, " ");
+        if (cleaned) {
+          return {
+            text: cleaned,
+            html: match.innerHTML || ''
+          };
+        }
+      }
+    }
+
+    const clone = element.cloneNode(true);
+    const junk = clone.querySelectorAll('button, mat-icon');
+    junk.forEach(node => node.remove());
+    return {
+      text: (clone.innerText || "").trim().replace(/\n+/g, " "),
+      html: clone.innerHTML || ''
+    };
   }
 
   observeMutations(callback) {
@@ -88,6 +126,8 @@ class GeminiAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

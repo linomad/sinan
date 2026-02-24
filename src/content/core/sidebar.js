@@ -10,8 +10,11 @@ class SidebarUI {
     this.isCollapsed = false;
     this.isVisible = true;
     this.activeId = null;
+    this.selectedIds = new Set();
     this.intersectionObserver = null;
     this.themeObserver = null;
+    this.mutationObserver = null;
+    this.toastTimer = null;
   }
 
   mount() {
@@ -27,8 +30,12 @@ class SidebarUI {
   }
 
   setupListeners() {
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+    }
+
     // Listen for DOM changes to update list
-    this.adapter.observeMutations(() => {
+    this.mutationObserver = this.adapter.observeMutations(() => {
       this.updateMessages();
       this.initScrollSpy(); // Re-init scroll spy for new elements
     });
@@ -128,18 +135,104 @@ class SidebarUI {
   }
 
   setActiveItem(id) {
-    if (this.activeId === id) return;
+    if (!id || this.activeId === id) return;
     this.activeId = id;
-    
+    this.refreshNavItemStates(true);
+  }
+
+  toggleSelectedItem(id) {
+    if (!id) return;
+
+    if (this.selectedIds.has(id)) {
+      this.selectedIds.delete(id);
+    } else {
+      this.selectedIds.add(id);
+    }
+
+    this.refreshNavItemStates(false);
+    this.updateExportButtonState();
+  }
+
+  refreshNavItemStates(shouldScrollActiveIntoView) {
+    if (!this.shadowRoot) return;
     const items = this.shadowRoot.querySelectorAll('.nav-item');
     items.forEach(item => {
-        if (item.getAttribute('data-id') === id) {
-            item.classList.add('active');
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else {
-            item.classList.remove('active');
-        }
+      const itemId = item.getAttribute('data-id');
+      const isActive = itemId === this.activeId;
+      const isSelected = this.selectedIds.has(itemId);
+
+      item.classList.toggle('active', isActive);
+      item.classList.toggle('selected', isSelected);
+
+      if (isActive && shouldScrollActiveIntoView) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     });
+  }
+
+  updateExportButtonState() {
+    if (!this.shadowRoot) return;
+    const exportBtn = this.shadowRoot.querySelector('.export-btn');
+    if (!exportBtn) return;
+
+    const count = this.selectedIds.size;
+    const enabled = count > 0;
+    exportBtn.disabled = !enabled;
+    const title = !enabled
+      ? 'Select messages to export'
+      : count === 1
+        ? 'Export 1 selected message as Markdown'
+        : `Export ${count} selected messages as Markdown`;
+    exportBtn.title = title;
+    exportBtn.setAttribute('aria-label', title);
+  }
+
+  handleExportClick() {
+    if (this.selectedIds.size === 0) {
+      this.showToast('Select messages first.');
+      return;
+    }
+
+    if (!window.ChatNavExportService) {
+      this.showToast('Export service unavailable.');
+      return;
+    }
+
+    const turns = this.adapter.getConversationTurns();
+    const selectedTurns = turns.filter(
+      turn => turn && turn.user && this.selectedIds.has(turn.user.id)
+    );
+
+    if (selectedTurns.length === 0) {
+      this.showToast('Selected messages not found. Please retry.');
+      return;
+    }
+
+    const result = window.ChatNavExportService.exportTurnsAsMarkdown(selectedTurns, {
+      source: this.adapter.domain,
+      url: window.location.href
+    });
+
+    if (!result.ok) {
+      this.showToast('Export failed.');
+      return;
+    }
+
+    const count = result.count || selectedTurns.length;
+    const noun = count === 1 ? 'item' : 'items';
+    this.showToast(`Exported ${count} ${noun}: ${result.fileName}`);
+  }
+
+  showToast(message) {
+    const toast = this.shadowRoot && this.shadowRoot.querySelector('.toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add('visible');
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 1800);
   }
 
   toggleCollapse() {
@@ -163,20 +256,49 @@ class SidebarUI {
     }
   }
 
+  destroy() {
+    if (this.intersectionObserver) this.intersectionObserver.disconnect();
+    if (this.themeObserver) this.themeObserver.disconnect();
+    if (this.mutationObserver) this.mutationObserver.disconnect();
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+
+    this.container = null;
+    this.shadowRoot = null;
+    this.intersectionObserver = null;
+    this.themeObserver = null;
+    this.mutationObserver = null;
+    this.toastTimer = null;
+  }
+
   updateMessages() {
     const messages = this.adapter.getUserMessages();
     const listContainer = this.shadowRoot.querySelector('.nav-list');
     if (!listContainer) return;
 
+    const messageIds = new Set(messages.map(message => message.id));
+    if (this.selectedIds.size > 0) {
+      this.selectedIds = new Set(
+        Array.from(this.selectedIds).filter(id => messageIds.has(id))
+      );
+    }
+    if (this.activeId && !messageIds.has(this.activeId)) {
+      this.activeId = null;
+    }
+
     if (messages.length === 0) {
       listContainer.innerHTML = '<div class="empty-state">No user messages found</div>';
+      this.updateExportButtonState();
       return;
     }
 
     listContainer.innerHTML = messages.map(msg => `
-      <div class="nav-item ${msg.id === this.activeId ? 'active' : ''}" data-id="${msg.id}" title="${msg.text.replace(/"/g, '&quot;')}">
+      <div class="nav-item ${msg.id === this.activeId ? 'active' : ''} ${this.selectedIds.has(msg.id) ? 'selected' : ''}" data-id="${msg.id}" title="${SidebarUI.escapeHtml(msg.text)}">
         <span class="nav-bullet"></span>
-        <span class="nav-text">${msg.text}</span>
+        <span class="nav-text">${SidebarUI.escapeHtml(msg.text)}</span>
       </div>
     `).join('');
 
@@ -184,6 +306,7 @@ class SidebarUI {
       item.onclick = () => {
         const msg = messages[index];
         const id = item.getAttribute('data-id');
+        this.toggleSelectedItem(id);
         this.setActiveItem(id);
         
         // Prioritize the element reference if valid and connected
@@ -194,6 +317,17 @@ class SidebarUI {
         }
       };
     });
+
+    this.updateExportButtonState();
+  }
+
+  static escapeHtml(value) {
+    return (value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   render() {
@@ -269,8 +403,10 @@ class SidebarUI {
            --text-muted: #fff; /* Make arrow white on hover */
         }
 
-        #sidebar.collapsed .header span, 
-        #sidebar.collapsed .nav-list {
+        #sidebar.collapsed .header-title,
+        #sidebar.collapsed .nav-list,
+        #sidebar.collapsed .export-btn,
+        #sidebar.collapsed .toast {
           display: none;
         }
 
@@ -291,7 +427,7 @@ class SidebarUI {
           transition: border-color 0.3s ease;
         }
 
-        .header span {
+        .header-title {
           font-weight: 600;
           font-size: 13px;
           color: var(--text-color);
@@ -300,20 +436,43 @@ class SidebarUI {
           opacity: 0.9;
         }
 
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .export-btn,
         .toggle-btn {
           width: 24px;
           height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
           border-radius: 6px;
           transition: all 0.2s;
-          font-size: 18px;
-          color: var(--text-muted);
           line-height: 1;
+          border: none;
+          background: transparent;
+          color: var(--text-muted);
         }
 
+        .export-btn {
+          font-size: 13px;
+          cursor: pointer;
+        }
+
+        .export-btn:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+
+        .toggle-btn {
+          cursor: pointer;
+          font-size: 18px;
+        }
+
+        .export-btn:hover:not(:disabled),
         .toggle-btn:hover {
           background: var(--item-hover-bg);
           color: var(--primary-color);
@@ -356,6 +515,14 @@ class SidebarUI {
           font-weight: 500;
         }
 
+        .nav-item.selected {
+          box-shadow: inset 0 0 0 1px rgba(16, 163, 127, 0.35);
+        }
+
+        .nav-item.active.selected {
+          box-shadow: inset 0 0 0 1px rgba(16, 163, 127, 0.6);
+        }
+
         .nav-item.active .nav-bullet {
           background: var(--primary-color);
           transform: scale(1.2);
@@ -389,6 +556,31 @@ class SidebarUI {
           opacity: 0.8;
         }
 
+        .toast {
+          position: absolute;
+          left: 50%;
+          bottom: 8px;
+          transform: translate(-50%, 8px);
+          background: rgba(17, 24, 39, 0.92);
+          color: #f9fafb;
+          font-size: 11px;
+          line-height: 1.3;
+          padding: 6px 10px;
+          border-radius: 8px;
+          max-width: 220px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .toast.visible {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+
         /* Scrollbar */
         .nav-list::-webkit-scrollbar {
           width: 4px;
@@ -403,16 +595,24 @@ class SidebarUI {
       </style>
       <div id="sidebar">
         <div class="header">
-          <span>Sinan</span>
-          <div class="toggle-btn" title="Toggle Sidebar">›</div>
+          <span class="header-title">Sinan</span>
+          <div class="header-actions">
+            <button class="export-btn" title="Select messages to export" aria-label="Select messages to export" disabled>⇩</button>
+            <div class="toggle-btn" title="Toggle Sidebar">›</div>
+          </div>
         </div>
         <div class="nav-list">
           <div class="empty-state">No messages yet...</div>
         </div>
+        <div class="toast" aria-live="polite"></div>
       </div>
     `;
     
     this.shadowRoot.querySelector('.toggle-btn').onclick = () => this.toggleCollapse();
+    this.shadowRoot.querySelector('.export-btn').onclick = (event) => {
+      event.stopPropagation();
+      this.handleExportClick();
+    };
     // Also allow clicking the collapsed sidebar bubble to expand
     this.shadowRoot.querySelector('#sidebar').onclick = (e) => {
         if (this.isCollapsed && !e.target.closest('.toggle-btn')) {

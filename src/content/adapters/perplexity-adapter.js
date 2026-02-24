@@ -55,6 +55,33 @@ class PerplexityAdapter extends BaseAdapter {
     return messages;
   }
 
+  getAssistantMessages() {
+    const messages = [];
+    const assistantElements = document.querySelectorAll('[class*="group/answer"], [class*="group/response"]');
+
+    assistantElements.forEach((el) => {
+      let text = el.innerText || "";
+      text = text.trim().replace(/\n+/g, " ");
+      if (!text) return;
+
+      const hash = window.ChatNavUtils.hashCode(text);
+      const navId = `chat-nav-pplx-assistant-${hash}`;
+
+      if (el.id !== navId) {
+        el.id = navId;
+      }
+
+      messages.push({
+        id: navId,
+        text,
+        html: el.innerHTML || '',
+        element: el
+      });
+    });
+
+    return messages;
+  }
+
   observeMutations(callback) {
     if (this.observer) this.observer.disconnect();
     
@@ -67,6 +94,8 @@ class PerplexityAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 

@@ -56,6 +56,34 @@ class YuanbaoAdapter extends BaseAdapter {
     return messages;
   }
 
+  getAssistantMessages() {
+    const messages = [];
+    const assistantElements = document.querySelectorAll('.agent-chat__list__item--ai, .agent-chat__list__item--bot');
+
+    assistantElements.forEach((el) => {
+      const contentEl = el.querySelector('.hyc-content-text');
+      let text = contentEl ? contentEl.innerText : "";
+      text = text.trim().replace(/\n+/g, " ");
+      if (!text) return;
+
+      const hash = window.ChatNavUtils.hashCode(text);
+      const navId = `chat-nav-yuanbao-assistant-${hash}`;
+
+      if (el.id !== navId) {
+        el.id = navId;
+      }
+
+      messages.push({
+        id: navId,
+        text,
+        html: contentEl ? (contentEl.innerHTML || '') : '',
+        element: el
+      });
+    });
+
+    return messages;
+  }
+
   observeMutations(callback) {
     if (this.observer) this.observer.disconnect();
     
@@ -69,6 +97,8 @@ class YuanbaoAdapter extends BaseAdapter {
         childList: true, 
         subtree: true 
     });
+
+    return this.observer;
   }
 }
 
