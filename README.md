@@ -12,12 +12,6 @@ Sinan is a Chrome extension designed to enhance your navigation experience withi
 - **Scroll Spy**: Automatically highlights the current section as you read.
 - **Minimized Mode**: Collapse the sidebar into a discreet bubble when not in use.
 
-## 🎨 Icon Design Prompt
-
-If you need to generate a matching icon, use the following prompt:
-
-> app icon design, flat vector art, minimalist. solid deep dark charcoal grey background (almost black). a single, bold, capital letter "S" in the center. font style: modern geometric sans-serif, thick lines, pure white color. no shadows, no gradients, no effects. clean, professional brand logo, high contrast, 4k.
-
 ## 🚀 Installation
 
 **Recommended: Install from the Chrome Web Store**
