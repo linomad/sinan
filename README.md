@@ -2,13 +2,13 @@
 
 **Your Compass for AI Conversations. 纵览千言，心有司南。**
 
-Sinan is a Chrome extension designed to enhance your navigation experience within long AI chat interfaces. It generates a floating, interactive table of contents based on user messages, allowing you to quickly jump back to any point in the conversation.
+Sinan is your compass for AI conversations. It automatically turns your prompts into a floating sidebar index for instant navigation, so you can jump across long chat threads without endless scrolling. It works across ChatGPT, Gemini, Doubao, Qwen, Perplexity, and Tencent Yuanbao, and adapts seamlessly to both light and dark modes.
 
 ## ✨ Features
 
-- **Multi-Platform Support**: Works seamlessly with ChatGPT, Gemini, Doubao, Qwen, and Perplexity.
+- **Multi-Platform Support**: Works seamlessly with ChatGPT, Gemini, Doubao, Qwen, Perplexity, and Tencent Yuanbao (`https://chatgpt.com/*`, `https://gemini.google.com/*`, `https://www.doubao.com/*`, `https://chat.qwen.ai/*`, `https://www.perplexity.ai/*`, `https://yuanbao.tencent.com/*`).
 - **Smart Navigation**: Extracts user queries and creates a clickable sidebar for instant scrolling.
-- **Glassmorphism UI**: A beautiful, translucent interface that adapts to both Dark and Light modes.
+- **Glassmorphism UI**: A beautiful, translucent interface that adapts naturally to both light and dark modes.
 - **Scroll Spy**: Automatically highlights the current section as you read.
 - **Minimized Mode**: Collapse the sidebar into a discreet bubble when not in use.
 
