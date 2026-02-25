@@ -9,6 +9,8 @@ class SidebarUI {
     this.shadowRoot = null;
     this.isCollapsed = false;
     this.isVisible = true;
+    this.isExportMode = false;
+    this.hasMessages = false;
     this.activeId = null;
     this.selectedIds = new Set();
     this.intersectionObserver = null;
@@ -150,6 +152,7 @@ class SidebarUI {
     }
 
     this.refreshNavItemStates(false);
+    this.updateExportFooterState();
     this.updateExportButtonState();
   }
 
@@ -159,7 +162,7 @@ class SidebarUI {
     items.forEach(item => {
       const itemId = item.getAttribute('data-id');
       const isActive = itemId === this.activeId;
-      const isSelected = this.selectedIds.has(itemId);
+      const isSelected = this.isExportMode && this.selectedIds.has(itemId);
 
       item.classList.toggle('active', isActive);
       item.classList.toggle('selected', isSelected);
@@ -175,19 +178,58 @@ class SidebarUI {
     const exportBtn = this.shadowRoot.querySelector('.export-btn');
     if (!exportBtn) return;
 
-    const count = this.selectedIds.size;
-    const enabled = count > 0;
+    const enabled = this.hasMessages && !this.isExportMode;
     exportBtn.disabled = !enabled;
-    const title = !enabled
-      ? 'Select messages to export'
-      : count === 1
-        ? 'Export 1 selected message as Markdown'
-        : `Export ${count} selected messages as Markdown`;
+    const title = !this.hasMessages
+      ? 'No messages to export'
+      : this.isExportMode
+        ? 'Export mode active'
+        : 'Select messages to export';
     exportBtn.title = title;
     exportBtn.setAttribute('aria-label', title);
   }
 
+  updateExportFooterState() {
+    if (!this.shadowRoot) return;
+    const footer = this.shadowRoot.querySelector('.export-footer');
+    const countEl = this.shadowRoot.querySelector('.footer-selection-count');
+    const downloadBtn = this.shadowRoot.querySelector('.footer-download-btn');
+    if (!footer || !countEl || !downloadBtn) return;
+
+    footer.classList.toggle('visible', this.isExportMode);
+    const count = this.selectedIds.size;
+    countEl.textContent = `已选 ${count} 条`;
+    downloadBtn.disabled = count === 0;
+  }
+
+  enterExportMode() {
+    if (this.isExportMode) return;
+    this.isExportMode = true;
+    this.refreshNavItemStates(false);
+    this.updateExportButtonState();
+    this.updateExportFooterState();
+  }
+
+  exitExportMode() {
+    this.isExportMode = false;
+    this.selectedIds.clear();
+    this.refreshNavItemStates(false);
+    this.updateExportButtonState();
+    this.updateExportFooterState();
+  }
+
   handleExportClick() {
+    if (!this.hasMessages) {
+      this.showToast('No messages to export.');
+      return;
+    }
+
+    this.enterExportMode();
+  }
+
+  handleDownloadClick() {
+    if (!this.isExportMode) return;
+
     if (this.selectedIds.size === 0) {
       this.showToast('Select messages first.');
       return;
@@ -221,6 +263,27 @@ class SidebarUI {
     const count = result.count || selectedTurns.length;
     const noun = count === 1 ? 'item' : 'items';
     this.showToast(`Exported ${count} ${noun}: ${result.fileName}`);
+    this.exitExportMode();
+  }
+
+  handleCancelExportClick() {
+    if (!this.isExportMode) return;
+    this.exitExportMode();
+  }
+
+  handleNavItemClick(msg, id) {
+    if (this.isExportMode) {
+      this.toggleSelectedItem(id);
+      return;
+    }
+
+    this.setActiveItem(id);
+
+    // Prioritize the element reference if valid and connected
+    const target = msg.element && msg.element.isConnected ? msg.element : document.getElementById(id);
+    if (target) {
+      this.adapter.scrollToElement(target);
+    }
   }
 
   showToast(message) {
@@ -279,6 +342,7 @@ class SidebarUI {
     const listContainer = this.shadowRoot.querySelector('.nav-list');
     if (!listContainer) return;
 
+    this.hasMessages = messages.length > 0;
     const messageIds = new Set(messages.map(message => message.id));
     if (this.selectedIds.size > 0) {
       this.selectedIds = new Set(
@@ -291,6 +355,11 @@ class SidebarUI {
 
     if (messages.length === 0) {
       listContainer.innerHTML = '<div class="empty-state">No user messages found</div>';
+      if (this.isExportMode) {
+        this.exitExportMode();
+      } else {
+        this.updateExportFooterState();
+      }
       this.updateExportButtonState();
       return;
     }
@@ -306,18 +375,12 @@ class SidebarUI {
       item.onclick = () => {
         const msg = messages[index];
         const id = item.getAttribute('data-id');
-        this.toggleSelectedItem(id);
-        this.setActiveItem(id);
-        
-        // Prioritize the element reference if valid and connected
-        let target = msg.element && msg.element.isConnected ? msg.element : document.getElementById(id);
-        
-        if (target) {
-          this.adapter.scrollToElement(target);
-        }
+        this.handleNavItemClick(msg, id);
       };
     });
 
+    this.refreshNavItemStates(false);
+    this.updateExportFooterState();
     this.updateExportButtonState();
   }
 
@@ -406,6 +469,7 @@ class SidebarUI {
         #sidebar.collapsed .header-title,
         #sidebar.collapsed .nav-list,
         #sidebar.collapsed .export-btn,
+        #sidebar.collapsed .export-footer,
         #sidebar.collapsed .toast {
           display: none;
         }
@@ -440,6 +504,71 @@ class SidebarUI {
           display: flex;
           align-items: center;
           gap: 6px;
+        }
+
+        .export-footer {
+          border-top: 1px solid var(--border-color);
+          padding: 14px 16px;
+          display: none;
+          justify-content: space-between;
+          align-items: center;
+          user-select: none;
+          transition: border-color 0.3s ease;
+          gap: 8px;
+        }
+
+        .export-footer.visible {
+          display: flex;
+        }
+
+        .footer-selection-count {
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--text-color);
+          letter-spacing: 0.01em;
+          opacity: 0.9;
+        }
+
+        .footer-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .footer-download-btn,
+        .footer-cancel-btn {
+          height: 24px;
+          border-radius: 6px;
+          border: none;
+          padding: 0 10px;
+          font-size: 12px;
+          line-height: 1;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .footer-download-btn {
+          background: var(--primary-color);
+          color: #ffffff;
+        }
+
+        .footer-download-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .footer-download-btn:hover:not(:disabled) {
+          filter: brightness(1.05);
+        }
+
+        .footer-cancel-btn {
+          background: var(--item-hover-bg);
+          color: var(--text-color);
+        }
+
+        .footer-cancel-btn:hover {
+          background: rgba(239, 68, 68, 0.16);
+          color: #ef4444;
         }
 
         .export-btn,
@@ -604,6 +733,13 @@ class SidebarUI {
         <div class="nav-list">
           <div class="empty-state">No messages yet...</div>
         </div>
+        <div class="export-footer">
+          <span class="footer-selection-count">已选 0 条</span>
+          <div class="footer-actions">
+            <button class="footer-download-btn" disabled>下载</button>
+            <button class="footer-cancel-btn">取消</button>
+          </div>
+        </div>
         <div class="toast" aria-live="polite"></div>
       </div>
     `;
@@ -612,6 +748,14 @@ class SidebarUI {
     this.shadowRoot.querySelector('.export-btn').onclick = (event) => {
       event.stopPropagation();
       this.handleExportClick();
+    };
+    this.shadowRoot.querySelector('.footer-download-btn').onclick = (event) => {
+      event.stopPropagation();
+      this.handleDownloadClick();
+    };
+    this.shadowRoot.querySelector('.footer-cancel-btn').onclick = (event) => {
+      event.stopPropagation();
+      this.handleCancelExportClick();
     };
     // Also allow clicking the collapsed sidebar bubble to expand
     this.shadowRoot.querySelector('#sidebar').onclick = (e) => {

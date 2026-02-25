@@ -13,15 +13,16 @@
 
 ### 2.1 UI 集成
 
-采用 Header 右上角导出按钮（推荐方案）：
-- 未选中条目时按钮 disabled。
-- 选中条目后按钮激活。
-- 导出后以轻量 toast 显示结果。
+采用 Header 右上角导出按钮 + Footer 导出操作区：
+- 默认态：点击 Header 导出按钮，仅进入“导出模式”。
+- 导出模式：侧边栏底部显示 Footer（样式与 Header 对齐），包含“Download / Cancel”。
+- 仅导出模式下列表支持多选 toggle；非导出模式下列表点击仅用于滚动定位。
+- 点击 Download 执行批量导出；点击 Cancel 退出导出模式并清空本次选择。
 
 优势：
 - 不改变列表行高与信息密度。
 - 与现有折叠按钮位置一致，认知成本低。
-- 交互路径明确（先选中再导出）。
+- 交互语义清晰：浏览与导出选择分离，避免一次点击承担两种行为。
 
 ### 2.2 分层设计
 
@@ -31,10 +32,11 @@
 
 ### 2.3 数据流
 
-1. 用户点击侧边栏条目 -> 设置 `selectedId`。
-2. 用户点击导出按钮 -> `SidebarUI` 调用 `adapter.getConversationTurns()`。
-3. 找到 selected turn -> `ChatNavExportService.exportTurnAsMarkdown(turn, meta)`。
-4. `ExportService` 生成 markdown + 安全文件名 -> 触发浏览器下载。
+1. 用户点击 Header 导出按钮 -> `SidebarUI` 进入 `isExportMode`。
+2. 导出模式中，用户点击列表条目 -> 仅 toggle `selectedIds`。
+3. 用户点击 Footer Download -> `SidebarUI` 调用 `adapter.getConversationTurns()` 并按 DOM 顺序过滤选中 turns。
+4. `ChatNavExportService.exportTurnsAsMarkdown(turns, meta)` 生成 markdown + 安全文件名并下载。
+5. 导出成功或点击 Cancel -> 退出导出模式并清空选中。
 
 ## 3. 已完成实现
 
@@ -64,7 +66,7 @@
 ## 4. 验证情况
 
 已执行：
-- `node --test tests/*.test.mjs` -> 5 passed, 0 failed
+- `node --test tests/*.test.mjs` -> 14 passed, 0 failed
 - 各变更 JS `node --check` 语法检查通过
 - `manifest.json` 结构校验通过（可被 JSON.parse）
 
@@ -114,14 +116,10 @@
 目标：不显著增加 UI 复杂度，同时支持批量导出。
 
 推荐方案（低侵入）：
-- 将当前 `selectedId` 升级为 `selectedIds: Set<string>`。
-- 列表项点击行为：
-  - 单击：导航到该消息并切换其选中状态（再次点击可取消）。
-  - active（滚动高亮）与 selected（导出选中）继续解耦。
-- Header 导出按钮始终复用，按钮文案/tooltip 动态显示选中数量：
-  - `0` 条：disabled
-  - `1` 条：导出 1 条
-  - `N` 条：导出 N 条
+- 新增导出模式状态 `isExportMode`。
+- Header 导出按钮只负责“进入导出模式”。
+- 导出模式下显示 Footer 操作区（Download/Cancel），并在列表开启多选 toggle。
+- 非导出模式下列表保持“导航滚动”职责，不承担选中逻辑。
 
 导出执行：
 - `SidebarUI` 收集 `selectedIds`。
@@ -145,9 +143,9 @@
 ### 7.4 分层改造点
 
 - UI 层（`sidebar.js`）：
-  - 单选状态 -> 多选集合状态
-  - 导出按钮状态与计数展示
-  - 选中态视觉强化（不影响 active 态）
+  - 增加 `isExportMode` 与 `selectedIds`
+  - Header 导出按钮与 Footer 下载/取消分工
+  - 导出模式与浏览模式点击语义分离
 - Core 层（`export-service.js`）：
   - 新增 `buildTurnsMarkdown(turns, meta)` 聚合多个 turn
   - 新增 `buildTurnBlock(turn)` 输出区块模板
@@ -180,14 +178,14 @@ Step 1：导出结构 V2（单条 block 化）
 
 Step 2：侧边栏多选状态
 - `SidebarUI`：
-  - `selectedId` -> `selectedIds: Set<string>`
-  - 点击条目改为 toggle 选中
-  - 导出按钮按选中数量启停并更新 tooltip
-- 刷新消息列表时保留仍有效的选中项，失效项自动清理。
+  - 增加 `isExportMode`
+  - 非导出模式点击条目：仅滚动定位
+  - 导出模式点击条目：仅 toggle 选中
+- Footer 显示选中数量、Download 可用态与 Cancel 退出。
 - 完成状态：已完成。
 
 Step 3：批量导出动作
-- 导出点击时：
+- Footer Download 点击时：
   - 从 `getConversationTurns()` 取全量 turns
   - 过滤选中项
   - 按 turns 原顺序导出（DOM 顺序）
@@ -220,10 +218,11 @@ Step 4：测试与回归
 
 - 文件：`src/content/core/sidebar.js`
 - 关键变化：
-  - 选中状态升级为 `selectedIds` 多选集合。
-  - 条目点击为 toggle 选中，同时保持 active（滚动定位）逻辑。
-  - 导出按钮按选中数量动态启停与提示。
-  - 导出时按 `getConversationTurns()` 顺序过滤选中项，确保 DOM 顺序一致。
+  - 新增 `isExportMode`，将“浏览”与“导出选择”解耦。
+  - Header 导出按钮仅负责进入导出模式。
+  - 新增 Footer（Download/Cancel），视觉样式与 Header 对齐。
+  - 非导出模式条目点击仅滚动；导出模式条目点击仅 toggle 选中。
+  - Download 时按 `getConversationTurns()` 顺序过滤选中项并导出；Cancel 退出模式并清空选中。
 
 ### 8.3 测试更新
 
@@ -236,7 +235,9 @@ Step 4：测试与回归
 - 文件：`tests/sidebar-multiselect.test.mjs`
 - 新增：
   - 多选导出按会话顺序过滤断言
-  - 导出按钮随选中数量变更状态/提示断言
+  - Header 导出按钮进入导出模式断言
+  - 浏览模式/导出模式点击职责分离断言
+  - Download/Cancel 状态切换断言
 
 测试结果：
-- `node --test tests/*.test.mjs`：10 passed, 0 failed
+- `node --test tests/*.test.mjs`：14 passed, 0 failed
