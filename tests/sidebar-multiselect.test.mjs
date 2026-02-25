@@ -24,6 +24,126 @@ function loadSidebar() {
   };
 }
 
+function createRenderHarness(SidebarUI, { messages = [] } = {}) {
+  const sidebarClasses = new Set();
+
+  const sidebarEl = {
+    onclick: null,
+    classList: {
+      add(className) {
+        sidebarClasses.add(className);
+      },
+      remove(className) {
+        sidebarClasses.delete(className);
+      },
+      toggle(className, force) {
+        if (force === undefined) {
+          if (sidebarClasses.has(className)) {
+            sidebarClasses.delete(className);
+            return false;
+          }
+          sidebarClasses.add(className);
+          return true;
+        }
+        if (force) {
+          sidebarClasses.add(className);
+        } else {
+          sidebarClasses.delete(className);
+        }
+        return force;
+      },
+      contains(className) {
+        return sidebarClasses.has(className);
+      }
+    }
+  };
+
+  const toggleBtn = {
+    onclick: null,
+    innerHTML: ''
+  };
+  const exportBtn = {
+    disabled: false,
+    title: '',
+    attrs: {},
+    onclick: null,
+    setAttribute(key, value) {
+      this.attrs[key] = value;
+    }
+  };
+  const navList = {
+    innerHTML: ''
+  };
+  const footer = {
+    visible: false,
+    classList: {
+      toggle(className, force) {
+        if (className === 'visible') {
+          footer.visible = Boolean(force);
+        }
+      }
+    }
+  };
+  const countEl = {
+    textContent: ''
+  };
+  const downloadBtn = {
+    disabled: true,
+    onclick: null
+  };
+  const cancelBtn = {
+    onclick: null
+  };
+  const toast = {
+    textContent: '',
+    classList: {
+      add() {},
+      remove() {}
+    }
+  };
+
+  const shadowRoot = {
+    innerHTML: '',
+    querySelector(selector) {
+      if (selector === '#sidebar') return sidebarEl;
+      if (selector === '.toggle-btn') return toggleBtn;
+      if (selector === '.export-btn') return exportBtn;
+      if (selector === '.nav-list') return navList;
+      if (selector === '.export-footer') return footer;
+      if (selector === '.footer-selection-count') return countEl;
+      if (selector === '.footer-download-btn') return downloadBtn;
+      if (selector === '.footer-cancel-btn') return cancelBtn;
+      if (selector === '.toast') return toast;
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.nav-item') return [];
+      return [];
+    }
+  };
+
+  const adapter = {
+    domain: 'chatgpt.com',
+    getUserMessages() {
+      return messages;
+    },
+    getConversationTurns() {
+      return [];
+    },
+    scrollToElement() {}
+  };
+
+  const sidebar = new SidebarUI(adapter);
+  sidebar.shadowRoot = shadowRoot;
+  sidebar.render();
+
+  return {
+    sidebar,
+    shadowRoot,
+    sidebarEl
+  };
+}
+
 test('SidebarUI exports selected turns in conversation order', () => {
   const { SidebarUI, sandbox } = loadSidebar();
 
@@ -189,4 +309,25 @@ test('SidebarUI updates footer count and download enabled when toggling selectio
   sidebar.toggleSelectedItem('u1');
   assert.equal(countEl.textContent, '已选 1 条');
   assert.equal(downloadBtn.disabled, false);
+});
+
+test('SidebarUI render includes idle/engaged visibility rules for the header actions', () => {
+  const { SidebarUI } = loadSidebar();
+  const { shadowRoot } = createRenderHarness(SidebarUI);
+  const html = shadowRoot.innerHTML;
+
+  assert.match(html, /opacity:\s*0\.38;/);
+  assert.match(html, /#sidebar:hover,\s*#sidebar:focus-within,\s*#sidebar\.export-mode/);
+  assert.match(html, /\.header-actions\s+\.reveal-on-engage/);
+});
+
+test('SidebarUI toggles export-mode class while entering and exiting export mode', () => {
+  const { SidebarUI } = loadSidebar();
+  const { sidebar, sidebarEl } = createRenderHarness(SidebarUI);
+
+  assert.equal(sidebarEl.classList.contains('export-mode'), false);
+  sidebar.enterExportMode();
+  assert.equal(sidebarEl.classList.contains('export-mode'), true);
+  sidebar.exitExportMode();
+  assert.equal(sidebarEl.classList.contains('export-mode'), false);
 });

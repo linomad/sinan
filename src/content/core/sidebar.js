@@ -202,9 +202,17 @@ class SidebarUI {
     downloadBtn.disabled = count === 0;
   }
 
+  syncSidebarInteractionState() {
+    if (!this.shadowRoot) return;
+    const sidebar = this.shadowRoot.querySelector('#sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('export-mode', this.isExportMode);
+  }
+
   enterExportMode() {
     if (this.isExportMode) return;
     this.isExportMode = true;
+    this.syncSidebarInteractionState();
     this.refreshNavItemStates(false);
     this.updateExportButtonState();
     this.updateExportFooterState();
@@ -213,6 +221,7 @@ class SidebarUI {
   exitExportMode() {
     this.isExportMode = false;
     this.selectedIds.clear();
+    this.syncSidebarInteractionState();
     this.refreshNavItemStates(false);
     this.updateExportButtonState();
     this.updateExportFooterState();
@@ -449,10 +458,18 @@ class SidebarUI {
                       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
                       background-color 0.3s ease,
                       border-color 0.3s ease,
-                      box-shadow 0.3s ease;
+                      box-shadow 0.3s ease,
+                      opacity 0.2s ease;
                       
           overflow: hidden;
           transform-origin: right center;
+          opacity: 0.38;
+        }
+
+        #sidebar:hover,
+        #sidebar:focus-within,
+        #sidebar.export-mode {
+          opacity: 1;
         }
 
         #sidebar.collapsed {
@@ -508,6 +525,23 @@ class SidebarUI {
           justify-content: center;
           min-height: 24px;
           gap: 6px;
+        }
+
+        .header-actions .reveal-on-engage {
+          opacity: 0;
+          visibility: hidden;
+          transform: translateX(3px);
+          pointer-events: none;
+          transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+
+        #sidebar:hover .header-actions .reveal-on-engage,
+        #sidebar:focus-within .header-actions .reveal-on-engage,
+        #sidebar.export-mode .header-actions .reveal-on-engage {
+          opacity: 1;
+          visibility: visible;
+          transform: translateX(0);
+          pointer-events: auto;
         }
 
         .export-footer {
@@ -754,7 +788,7 @@ class SidebarUI {
         <div class="header">
           <span class="header-title">Sinan</span>
           <div class="header-actions">
-            <button class="export-btn" type="button" title="Select messages to export" aria-label="Select messages to export" disabled>
+            <button class="export-btn reveal-on-engage" type="button" title="Select messages to export" aria-label="Select messages to export" disabled>
               <span class="header-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false">
                   <path d="M12 4v10"></path>
@@ -805,6 +839,7 @@ class SidebarUI {
             this.toggleCollapse();
         }
     };
+    this.syncSidebarInteractionState();
     
     this.updateMessages();
   }

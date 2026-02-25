@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sinan (司南)",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "icons": {
     "16": "assets/icon-v1-reference-transparent-128.png",
