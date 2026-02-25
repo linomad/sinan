@@ -206,6 +206,21 @@ test('SidebarUI enters export mode when header export button is clicked', () => 
   assert.equal(called, false);
 });
 
+test('SidebarUI header export button toggles export mode on repeated clicks', () => {
+  const { SidebarUI } = loadSidebar();
+
+  const sidebar = new SidebarUI({});
+  sidebar.hasMessages = true;
+
+  sidebar.handleExportClick();
+  assert.equal(sidebar.isExportMode, true);
+
+  sidebar.selectedIds = new Set(['u1']);
+  sidebar.handleExportClick();
+  assert.equal(sidebar.isExportMode, false);
+  assert.equal(sidebar.selectedIds.size, 0);
+});
+
 test('SidebarUI click behavior differs by mode: browse vs export select', () => {
   const { SidebarUI } = loadSidebar();
 
@@ -272,11 +287,18 @@ test('SidebarUI updates footer count and download enabled when toggling selectio
   const sidebar = new SidebarUI({});
   sidebar.isExportMode = true;
   sidebar.hasMessages = true;
+  const iconEl = {
+    innerHTML: ''
+  };
 
   const exportBtn = {
     disabled: false,
     title: '',
     attrs: {},
+    querySelector(selector) {
+      if (selector === '.header-icon') return iconEl;
+      return null;
+    },
     setAttribute(key, value) {
       this.attrs[key] = value;
     }
@@ -287,7 +309,7 @@ test('SidebarUI updates footer count and download enabled when toggling selectio
     }
   };
   const countEl = {
-    textContent: '已选 0 条'
+    textContent: 'Selected 0'
   };
   const downloadBtn = {
     disabled: true
@@ -307,8 +329,12 @@ test('SidebarUI updates footer count and download enabled when toggling selectio
   };
 
   sidebar.toggleSelectedItem('u1');
-  assert.equal(countEl.textContent, '已选 1 条');
+  assert.equal(countEl.textContent, 'Selected 1');
   assert.equal(downloadBtn.disabled, false);
+  assert.equal(exportBtn.disabled, false);
+  assert.equal(exportBtn.title, 'Undo export mode');
+  assert.equal(exportBtn.attrs['aria-label'], 'Undo export mode');
+  assert.match(iconEl.innerHTML, /M3 7v6h6/);
 });
 
 test('SidebarUI render includes idle/engaged visibility rules for the header actions', () => {
@@ -319,6 +345,11 @@ test('SidebarUI render includes idle/engaged visibility rules for the header act
   assert.match(html, /opacity:\s*0\.38;/);
   assert.match(html, /#sidebar:hover,\s*#sidebar:focus-within,\s*#sidebar\.export-mode/);
   assert.match(html, /\.header-actions\s+\.reveal-on-engage/);
+  assert.match(html, />Selected 0</);
+  assert.match(html, />Download</);
+  assert.match(html, />Cancel</);
+  assert.doesNotMatch(html, /已选|下载|取消/);
+  assert.doesNotMatch(html, /export-btn-text/);
 });
 
 test('SidebarUI toggles export-mode class while entering and exiting export mode', () => {
@@ -330,4 +361,16 @@ test('SidebarUI toggles export-mode class while entering and exiting export mode
   assert.equal(sidebarEl.classList.contains('export-mode'), true);
   sidebar.exitExportMode();
   assert.equal(sidebarEl.classList.contains('export-mode'), false);
+});
+
+test('SidebarUI collapse toggle keeps toggle button markup stable', () => {
+  const { SidebarUI } = loadSidebar();
+  const { sidebar, shadowRoot } = createRenderHarness(SidebarUI);
+  const toggleBtn = shadowRoot.querySelector('.toggle-btn');
+
+  const initialMarkup = toggleBtn.innerHTML;
+  sidebar.toggleCollapse();
+  sidebar.toggleCollapse();
+
+  assert.equal(toggleBtn.innerHTML, initialMarkup);
 });

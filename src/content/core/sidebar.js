@@ -173,20 +173,47 @@ class SidebarUI {
     });
   }
 
+  getExportButtonIconMarkup() {
+    if (this.isExportMode) {
+      return `
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M3 7v6h6"></path>
+          <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+        </svg>
+      `;
+    }
+
+    return `
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M12 4v10"></path>
+        <path d="m7.5 10.5 4.5 4.5 4.5-4.5"></path>
+        <path d="M5 19h14"></path>
+      </svg>
+    `;
+  }
+
+  getExportButtonLabel() {
+    if (!this.hasMessages) return 'No messages to export';
+    if (this.isExportMode) return 'Undo export mode';
+    return 'Select messages to export';
+  }
+
   updateExportButtonState() {
     if (!this.shadowRoot) return;
     const exportBtn = this.shadowRoot.querySelector('.export-btn');
     if (!exportBtn) return;
 
-    const enabled = this.hasMessages && !this.isExportMode;
-    exportBtn.disabled = !enabled;
-    const title = !this.hasMessages
-      ? 'No messages to export'
-      : this.isExportMode
-        ? 'Export mode active'
-        : 'Select messages to export';
-    exportBtn.title = title;
-    exportBtn.setAttribute('aria-label', title);
+    exportBtn.disabled = !this.hasMessages;
+    const label = this.getExportButtonLabel();
+    exportBtn.title = label;
+    exportBtn.setAttribute('aria-label', label);
+
+    const iconEl = typeof exportBtn.querySelector === 'function'
+      ? exportBtn.querySelector('.header-icon')
+      : null;
+    if (iconEl) {
+      iconEl.innerHTML = this.getExportButtonIconMarkup();
+    }
   }
 
   updateExportFooterState() {
@@ -198,7 +225,7 @@ class SidebarUI {
 
     footer.classList.toggle('visible', this.isExportMode);
     const count = this.selectedIds.size;
-    countEl.textContent = `已选 ${count} 条`;
+    countEl.textContent = `Selected ${count}`;
     downloadBtn.disabled = count === 0;
   }
 
@@ -230,6 +257,11 @@ class SidebarUI {
   handleExportClick() {
     if (!this.hasMessages) {
       this.showToast('No messages to export.');
+      return;
+    }
+
+    if (this.isExportMode) {
+      this.exitExportMode();
       return;
     }
 
@@ -310,15 +342,8 @@ class SidebarUI {
   toggleCollapse() {
     this.isCollapsed = !this.isCollapsed;
     const sidebar = this.shadowRoot.querySelector('#sidebar');
-    const toggleBtn = this.shadowRoot.querySelector('.toggle-btn');
-    
-    if (this.isCollapsed) {
-        sidebar.classList.add('collapsed');
-        toggleBtn.innerHTML = '‹'; 
-    } else {
-        sidebar.classList.remove('collapsed');
-        toggleBtn.innerHTML = '›'; 
-    }
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed', this.isCollapsed);
   }
 
   toggleVisibility() {
@@ -661,6 +686,11 @@ class SidebarUI {
         .toggle-btn .header-icon {
           width: 14px;
           height: 14px;
+          transition: transform 0.2s ease;
+        }
+
+        #sidebar.collapsed .toggle-btn .header-icon {
+          transform: rotate(180deg);
         }
 
         .export-btn:hover:not(:disabled),
@@ -810,10 +840,10 @@ class SidebarUI {
           <div class="empty-state">No messages yet...</div>
         </div>
         <div class="export-footer">
-          <span class="footer-selection-count">已选 0 条</span>
+          <span class="footer-selection-count">Selected 0</span>
           <div class="footer-actions">
-            <button class="footer-download-btn" disabled>下载</button>
-            <button class="footer-cancel-btn">取消</button>
+            <button class="footer-download-btn" disabled>Download</button>
+            <button class="footer-cancel-btn">Cancel</button>
           </div>
         </div>
         <div class="toast" aria-live="polite"></div>
