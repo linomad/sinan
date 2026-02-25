@@ -407,6 +407,7 @@ class SidebarUI {
           --item-active-bg: rgba(16, 163, 127, 0.08);
           --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
           --bullet-color: #D1D5DB;
+          --secondary-btn-hover-bg: rgba(15, 23, 42, 0.08);
         }
 
         /* Dark Mode Overrides (Deep, Contrast) */
@@ -419,6 +420,7 @@ class SidebarUI {
           --item-active-bg: rgba(16, 163, 127, 0.15);
           --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
           --bullet-color: #4B5563;
+          --secondary-btn-hover-bg: rgba(255, 255, 255, 0.12);
         }
 
         #sidebar {
@@ -503,6 +505,8 @@ class SidebarUI {
         .header-actions {
           display: flex;
           align-items: center;
+          justify-content: center;
+          min-height: 24px;
           gap: 6px;
         }
 
@@ -567,27 +571,47 @@ class SidebarUI {
         }
 
         .footer-cancel-btn:hover {
-          background: rgba(239, 68, 68, 0.16);
-          color: #ef4444;
+          background: var(--secondary-btn-hover-bg);
+          color: var(--text-color);
         }
 
         .export-btn,
         .toggle-btn {
           width: 24px;
           height: 24px;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
           border-radius: 6px;
           transition: all 0.2s;
           line-height: 1;
+          padding: 0;
           border: none;
           background: transparent;
           color: var(--text-muted);
         }
 
+        .header-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 16px;
+          pointer-events: none;
+        }
+
+        .header-icon svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+          stroke: currentColor;
+          fill: none;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
         .export-btn {
-          font-size: 13px;
           cursor: pointer;
         }
 
@@ -598,7 +622,11 @@ class SidebarUI {
 
         .toggle-btn {
           cursor: pointer;
-          font-size: 18px;
+        }
+
+        .toggle-btn .header-icon {
+          width: 14px;
+          height: 14px;
         }
 
         .export-btn:hover:not(:disabled),
@@ -726,8 +754,22 @@ class SidebarUI {
         <div class="header">
           <span class="header-title">Sinan</span>
           <div class="header-actions">
-            <button class="export-btn" title="Select messages to export" aria-label="Select messages to export" disabled>⇩</button>
-            <div class="toggle-btn" title="Toggle Sidebar">›</div>
+            <button class="export-btn" type="button" title="Select messages to export" aria-label="Select messages to export" disabled>
+              <span class="header-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 4v10"></path>
+                  <path d="m7.5 10.5 4.5 4.5 4.5-4.5"></path>
+                  <path d="M5 19h14"></path>
+                </svg>
+              </span>
+            </button>
+            <button class="toggle-btn" type="button" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+              <span class="header-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="m9 6 6 6-6 6"></path>
+                </svg>
+              </span>
+            </button>
           </div>
         </div>
         <div class="nav-list">

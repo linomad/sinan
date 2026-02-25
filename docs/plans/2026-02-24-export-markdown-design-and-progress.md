@@ -223,6 +223,7 @@ Step 4：测试与回归
   - 新增 Footer（Download/Cancel），视觉样式与 Header 对齐。
   - 非导出模式条目点击仅滚动；导出模式条目点击仅 toggle 选中。
   - Download 时按 `getConversationTurns()` 顺序过滤选中项并导出；Cancel 退出模式并清空选中。
+  - 修复导出模式下 footer 状态同步：toggle 选中/取消时立即刷新“已选 N 条”与下载按钮可用态。
 
 ### 8.3 测试更新
 
@@ -238,6 +239,22 @@ Step 4：测试与回归
   - Header 导出按钮进入导出模式断言
   - 浏览模式/导出模式点击职责分离断言
   - Download/Cancel 状态切换断言
+  - 导出模式下 toggle 选择后 footer 计数与下载按钮状态同步断言
 
 测试结果：
 - `node --test tests/*.test.mjs`：14 passed, 0 failed
+
+## 9. 缺陷修复记录（2026-02-25）
+
+问题：
+- 进入导出模式后，列表项可见选中样式，但 footer 始终显示“已选 0 条”，下载按钮保持禁用。
+
+根因：
+- `toggleSelectedItem()` 更新了 `selectedIds`，但未触发 `updateExportFooterState()`，导致 footer 计数与按钮状态未随选择变更刷新。
+
+修复：
+- 在 `toggleSelectedItem()` 中补充 `updateExportFooterState()` 调用，使每次选中/取消都同步刷新 footer。
+
+验证：
+- 新增单测：`SidebarUI updates footer count and download enabled when toggling selection in export mode`
+- 全量测试通过：`node --test tests/*.test.mjs` -> 14 passed, 0 failed

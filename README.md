@@ -8,9 +8,16 @@ Sinan is your compass for AI conversations. It automatically turns your prompts 
 
 - **Multi-Platform Support**: Works seamlessly with ChatGPT, Gemini, Doubao, Qwen, Perplexity, and Tencent Yuanbao (`https://chatgpt.com/*`, `https://gemini.google.com/*`, `https://www.doubao.com/*`, `https://chat.qwen.ai/*`, `https://www.perplexity.ai/*`, `https://yuanbao.tencent.com/*`).
 - **Smart Navigation**: Extracts user queries and creates a clickable sidebar for instant scrolling.
+- **Markdown Export**: Enter export mode, multi-select turns, and download one high-fidelity Markdown file in conversation (DOM) order.
 - **Glassmorphism UI**: A beautiful, translucent interface that adapts naturally to both light and dark modes.
 - **Scroll Spy**: Automatically highlights the current section as you read.
 - **Minimized Mode**: Collapse the sidebar into a discreet bubble when not in use.
+
+## 📝 Markdown Export
+
+Click `⇩` to enter export mode, select messages, then use `下载` to export or `取消` to exit.
+Export result is a single `.md` file in conversation order, with rich markdown preserved.
+Filename example: `sinan-chatgpt.com-20260225-1530-selected-3.md`.
 
 ## 🚀 Installation
 
