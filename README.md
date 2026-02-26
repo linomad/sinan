@@ -2,11 +2,11 @@
 
 **Your Compass for AI Conversations. 纵览千言，心有司南。**
 
-Sinan is your compass for AI conversations. It automatically turns your prompts into a floating sidebar index for instant navigation, so you can jump across long chat threads without endless scrolling. It works across ChatGPT, Gemini, Doubao, Qwen, Perplexity, and Tencent Yuanbao, and adapts seamlessly to both light and dark modes.
+Sinan is your compass for web conversations. It turns your prompts into a floating sidebar index for instant navigation, so you can jump across long threads without endless scrolling. It adapts seamlessly to both light and dark modes.
 
 ## ✨ Features
 
-- **Multi-Platform Support**: Works seamlessly with ChatGPT, Gemini, Doubao, Qwen, Perplexity, and Tencent Yuanbao (`https://chatgpt.com/*`, `https://gemini.google.com/*`, `https://www.doubao.com/*`, `https://chat.qwen.ai/*`, `https://www.perplexity.ai/*`, `https://yuanbao.tencent.com/*`).
+- **Multi-Platform Support**: Works across supported conversation websites declared in extension host permissions.
 - **Smart Navigation**: Extracts user queries and creates a clickable sidebar for instant scrolling.
 - **Markdown Export**: Enter export mode, multi-select turns, and download one high-fidelity Markdown file in conversation (DOM) order.
 - **Glassmorphism UI**: A beautiful, translucent interface that adapts naturally to both light and dark modes.
@@ -26,6 +26,8 @@ Filename example: `sinan-chatgpt.com-20260225-1530-selected-3.md`.
 For the best experience (easy setup + automatic updates), install Sinan directly from the Chrome Web Store:  
 建议优先通过 Chrome Web Store 安装，流程更简单且可自动获取更新。  
 [Sinan (司南) - Chrome Web Store](https://chromewebstore.google.com/detail/sinan-%E5%8F%B8%E5%8D%97/khififjmhndmolbpabmaidlkfpjdmejk?hl=en-US&utm_source=ext_sidebar)
+
+Store listing copy reference: `docs/WEBSTORE_LISTING.md`
 
 **Local development install (optional)**
 
