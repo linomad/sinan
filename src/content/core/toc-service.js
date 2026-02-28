@@ -3,6 +3,27 @@
  * Depends on ChatNavTurnContentService for normalized markdown input.
  */
 class ChatNavTocService {
+  static buildTurnDomSignature(turn) {
+    const segments = Array.isArray(turn?.assistantSegments) ? turn.assistantSegments : [];
+    const assistantTextHash = ChatNavTocService.hashText(turn?.assistantText || '');
+
+    if (segments.length === 0) {
+      return `segments:0|assistant:${assistantTextHash}`;
+    }
+
+    const segmentSignatures = segments.map((segment, index) => {
+      const segmentId = String(segment?.id || index);
+      const markdownHash = ChatNavTocService.hashText(segment?.markdown || '');
+      const htmlHash = ChatNavTocService.hashText(segment?.html || '');
+      const textHash = ChatNavTocService.hashText(segment?.text || '');
+      const headingSignature = ChatNavTocService.buildSegmentHeadingSignature(segment?.element);
+
+      return `${segmentId}|md:${markdownHash}|html:${htmlHash}|text:${textHash}|heads:${headingSignature}`;
+    }).join('||');
+
+    return `segments:${segments.length}|assistant:${assistantTextHash}|${segmentSignatures}`;
+  }
+
   static extractTurnDomHeadings(turn) {
     const segments = Array.isArray(turn?.assistantSegments) ? turn.assistantSegments : [];
     const toc = [];
@@ -121,6 +142,30 @@ class ChatNavTocService {
     const match = tagName.match(/^H([1-6])$/);
     if (!match) return 0;
     return Number(match[1]);
+  }
+
+  static buildSegmentHeadingSignature(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return 'none';
+    const headingElements = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+    if (headingElements.length === 0) return 'none';
+
+    return headingElements.map((headingElement) => {
+      const level = ChatNavTocService.parseHeadingLevel(headingElement);
+      const text = ChatNavTocService.normalizeHeadingText(
+        headingElement.textContent || headingElement.innerText || ''
+      );
+      if (!level || !text) return '';
+      return `${level}:${ChatNavTocService.hashText(text)}`;
+    }).filter(Boolean).join(',');
+  }
+
+  static hashText(value) {
+    const input = String(value || '');
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0).toString(16);
   }
 
   static getTurnContentService() {

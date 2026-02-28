@@ -334,6 +334,51 @@ test('SidebarUI TOC item click falls back to assistant segment container when he
   assert.equal(scrollTarget, assistantEl);
 });
 
+test('SidebarUI refreshes TOC cache when turn content changes for same user message', () => {
+  const { SidebarUI, sandbox } = loadSidebar();
+
+  const turnWithoutHeadings = {
+    user: { id: 'u1' },
+    assistantSegments: [{
+      element: {
+        querySelectorAll() {
+          return [];
+        }
+      }
+    }]
+  };
+  const turnWithHeadings = {
+    user: { id: 'u1' },
+    assistantSegments: [{
+      element: {
+        querySelectorAll() {
+          return [{ tagName: 'H2', textContent: 'Section' }];
+        }
+      }
+    }]
+  };
+  const headingElement = { isConnected: true };
+
+  sandbox.window.ChatNavTocService = {
+    extractTurnDomHeadings(turn) {
+      if (turn === turnWithHeadings) {
+        return [{ level: 2, text: 'Section', segmentIndex: 0, headingIndex: 0, targetElement: headingElement }];
+      }
+      return [];
+    }
+  };
+
+  const sidebar = new SidebarUI({});
+
+  sidebar.syncTurnMap([turnWithoutHeadings]);
+  assert.equal(sidebar.resolveTocItems('u1').length, 0);
+
+  sidebar.syncTurnMap([turnWithHeadings]);
+  const refreshedItems = sidebar.resolveTocItems('u1');
+  assert.equal(refreshedItems.length, 1);
+  assert.equal(refreshedItems[0].text, 'Section');
+});
+
 test('SidebarUI cancel exits export mode and clears selected ids', () => {
   const { SidebarUI } = loadSidebar();
 

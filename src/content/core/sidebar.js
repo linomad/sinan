@@ -221,9 +221,13 @@ class SidebarUI {
 
   resolveTocItems(id) {
     if (!id) return [];
-    if (this.tocCache.has(id)) return this.tocCache.get(id);
-
     const turn = this.turnMap.get(id);
+    const signature = this.buildTurnTocSignature(turn);
+    const cached = this.tocCache.get(id);
+    if (cached && cached.signature === signature) {
+      return cached.items;
+    }
+
     const tocService = window.ChatNavTocService;
     const rawItems = (turn && tocService && typeof tocService.extractTurnDomHeadings === 'function')
       ? tocService.extractTurnDomHeadings(turn)
@@ -241,8 +245,46 @@ class SidebarUI {
         }))
       : [];
 
-    this.tocCache.set(id, normalizedItems);
+    this.tocCache.set(id, {
+      signature,
+      items: normalizedItems
+    });
     return normalizedItems;
+  }
+
+  buildTurnTocSignature(turn) {
+    if (!turn) return 'turn:missing';
+    const tocService = window.ChatNavTocService;
+    if (tocService && typeof tocService.buildTurnDomSignature === 'function') {
+      return tocService.buildTurnDomSignature(turn);
+    }
+
+    const segments = Array.isArray(turn.assistantSegments) ? turn.assistantSegments : [];
+    const segmentSignature = segments.map((segment, index) => {
+      const id = String(segment?.id || index);
+      const markdownLength = String(segment?.markdown || '').trim().length;
+      const htmlLength = String(segment?.html || '').trim().length;
+      const textLength = String(segment?.text || '').trim().length;
+      const root = segment && segment.element && typeof segment.element.querySelectorAll === 'function'
+        ? segment.element
+        : null;
+      const headingSignature = root
+        ? Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'))
+          .map((headingElement) => {
+            const level = String(headingElement?.tagName || '').toUpperCase();
+            const text = String(headingElement?.textContent || headingElement?.innerText || '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            if (!text) return '';
+            return `${level}:${text}`;
+          })
+          .filter(Boolean)
+          .join(',')
+        : 'none';
+      return `${id}:${markdownLength}:${htmlLength}:${textLength}:${headingSignature}`;
+    }).join('|');
+    const assistantTextLength = String(turn?.assistantText || '').trim().length;
+    return `segments:${segments.length};assistant:${assistantTextLength};${segmentSignature}`;
   }
 
   buildTocListMarkup(id) {
