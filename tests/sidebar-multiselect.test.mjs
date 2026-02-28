@@ -249,6 +249,91 @@ test('SidebarUI click behavior differs by mode: browse vs export select', () => 
   assert.equal(sidebar.selectedIds.has('u1'), true);
 });
 
+test('SidebarUI keeps only one TOC expanded at a time', () => {
+  const { SidebarUI } = loadSidebar();
+  const sidebar = new SidebarUI({});
+  sidebar.updateMessages = () => {};
+  sidebar.resolveTocItems = () => [];
+
+  sidebar.toggleTocItem('u1');
+  assert.equal(sidebar.expandedTocId, 'u1');
+
+  sidebar.toggleTocItem('u2');
+  assert.equal(sidebar.expandedTocId, 'u2');
+
+  sidebar.toggleTocItem('u2');
+  assert.equal(sidebar.expandedTocId, null);
+});
+
+test('SidebarUI collapses expanded TOC when clicking another user message', () => {
+  const { SidebarUI } = loadSidebar();
+  let scrollCount = 0;
+  let rerenderCount = 0;
+  const sidebar = new SidebarUI({
+    scrollToElement() {
+      scrollCount += 1;
+    }
+  });
+  sidebar.updateMessages = () => {
+    rerenderCount += 1;
+  };
+  sidebar.expandedTocId = 'u1';
+
+  const msg = {
+    id: 'u2',
+    element: {
+      isConnected: true
+    }
+  };
+  sidebar.handleNavItemClick(msg, 'u2');
+
+  assert.equal(sidebar.expandedTocId, null);
+  assert.equal(sidebar.activeId, 'u2');
+  assert.equal(scrollCount, 1);
+  assert.equal(rerenderCount, 1);
+});
+
+test('SidebarUI TOC item click scrolls to the mapped heading element', () => {
+  const { SidebarUI } = loadSidebar();
+  const headingEl = { isConnected: true };
+  let scrollTarget = null;
+
+  const sidebar = new SidebarUI({
+    scrollToElement(target) {
+      scrollTarget = target;
+    }
+  });
+  sidebar.resolveTocItems = () => [
+    { level: 2, text: 'Overview', targetElement: headingEl }
+  ];
+
+  sidebar.handleTocItemClick('u1', '0');
+  assert.equal(scrollTarget, headingEl);
+});
+
+test('SidebarUI TOC item click falls back to assistant segment container when heading missing', () => {
+  const { SidebarUI } = loadSidebar();
+  const assistantEl = { isConnected: true };
+  let scrollTarget = null;
+
+  const sidebar = new SidebarUI({
+    scrollToElement(target) {
+      scrollTarget = target;
+    }
+  });
+  sidebar.turnMap = new Map([
+    ['u1', {
+      assistantSegments: [{ element: assistantEl }]
+    }]
+  ]);
+  sidebar.resolveTocItems = () => [
+    { level: 2, text: 'Overview', targetElement: null }
+  ];
+
+  sidebar.handleTocItemClick('u1', '0');
+  assert.equal(scrollTarget, assistantEl);
+});
+
 test('SidebarUI cancel exits export mode and clears selected ids', () => {
   const { SidebarUI } = loadSidebar();
 
@@ -350,6 +435,17 @@ test('SidebarUI render includes idle/engaged visibility rules for the header act
   assert.match(html, />Cancel</);
   assert.doesNotMatch(html, /已选|下载|取消/);
   assert.doesNotMatch(html, /export-btn-text/);
+  assert.doesNotMatch(html, /nav-bullet/);
+  assert.match(html, /toc-toggle-btn/);
+  assert.match(html, /\.toc-toggle-btn\s*{[^}]*cursor:\s*pointer/);
+  assert.match(html, /nav-item\.active \.toc-toggle-btn/);
+  assert.doesNotMatch(html, /nav-item:hover \.toc-toggle-btn/);
+  assert.doesNotMatch(html, /nav-item\.selected \.toc-toggle-btn/);
+  assert.doesNotMatch(html, /nav-item\.toc-expanded \.toc-toggle-btn/);
+  assert.doesNotMatch(html, /\.nav-toc\s*{[^}]*background\s*:/);
+  assert.match(html, /\.nav-toc-item,\s*\.nav-toc-empty\s*{[^}]*color:\s*var\(--text-muted\)/);
+  assert.doesNotMatch(html, /\.nav-toc-item\s*{[^}]*color:\s*inherit/);
+  assert.match(html, /\.nav-toc-item:hover\s*{[^}]*color:\s*var\(--text-color\)/);
 });
 
 test('SidebarUI toggles export-mode class while entering and exiting export mode', () => {

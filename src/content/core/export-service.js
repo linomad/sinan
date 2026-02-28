@@ -79,35 +79,10 @@ class ChatNavExportService {
   }
 
   static buildAssistantMarkdown(turn) {
-    const segments = Array.isArray(turn?.assistantSegments) ? turn.assistantSegments : [];
-    const richParts = [];
-
-    segments.forEach((segment) => {
-      const markdown = (segment?.markdown || '').trim();
-      if (markdown) {
-        richParts.push(markdown);
-        return;
-      }
-
-      const html = (segment?.html || '').trim();
-      if (html) {
-        const converted = ChatNavExportService.htmlToMarkdown(html);
-        if (converted) {
-          richParts.push(converted);
-          return;
-        }
-      }
-
-      const text = (segment?.text || '').trim();
-      if (text) {
-        richParts.push(text);
-      }
-    });
-
-    if (richParts.length > 0) {
-      return richParts.join('\n\n').trim();
+    const contentService = ChatNavExportService.getTurnContentService();
+    if (contentService) {
+      return contentService.buildAssistantMarkdown(turn);
     }
-
     return (turn?.assistantText || '').trim();
   }
 
@@ -142,23 +117,13 @@ class ChatNavExportService {
   }
 
   static htmlToMarkdown(html) {
-    if (!html) return '';
-
-    const service = ChatNavExportService.getTurndownService();
-    if (!service) {
-      return ChatNavExportService.normalizeMarkdown(
-        ChatNavExportService.stripHtml(html)
-      );
+    const contentService = ChatNavExportService.getTurnContentService();
+    if (contentService) {
+      return contentService.htmlToMarkdown(html);
     }
-
-    try {
-      return ChatNavExportService.normalizeMarkdown(service.turndown(html));
-    } catch (error) {
-      console.warn('Sinan: turndown conversion failed, fallback to plain text.', error);
-      return ChatNavExportService.normalizeMarkdown(
-        ChatNavExportService.stripHtml(html)
-      );
-    }
+    return ChatNavExportService.normalizeMarkdown(
+      ChatNavExportService.stripHtml(html)
+    );
   }
 
   static formatDateTime(date) {
@@ -193,50 +158,31 @@ class ChatNavExportService {
   }
 
   static getTurndownService() {
-    if (ChatNavExportService.turndownService) {
-      return ChatNavExportService.turndownService;
-    }
-
-    const TurndownCtor = (typeof window !== 'undefined' && window.TurndownService)
-      || (typeof globalThis !== 'undefined' && globalThis.TurndownService);
-    if (typeof TurndownCtor !== 'function') return null;
-
-    const service = new TurndownCtor({
-      headingStyle: 'atx',
-      codeBlockStyle: 'fenced',
-      bulletListMarker: '-',
-      emDelimiter: '*',
-      strongDelimiter: '**'
-    });
-
-    const pluginRoot = (typeof window !== 'undefined' && window.turndownPluginGfm)
-      || (typeof globalThis !== 'undefined' && globalThis.turndownPluginGfm);
-    if (pluginRoot && typeof pluginRoot.gfm === 'function') {
-      service.use(pluginRoot.gfm);
-    }
-
-    ChatNavExportService.turndownService = service;
-    return service;
+    const contentService = ChatNavExportService.getTurnContentService();
+    if (!contentService) return null;
+    return contentService.getTurndownService();
   }
 
   static normalizeMarkdown(value) {
-    return String(value || '')
-      .replace(/\r\n/g, '\n')
-      .replace(/[ \t]+\n/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    const contentService = ChatNavExportService.getTurnContentService();
+    if (contentService) {
+      return contentService.normalizeMarkdown(value);
+    }
+    return String(value || '').trim();
   }
 
   static stripHtml(value) {
-    if (!value) return '';
-
-    if (typeof DOMParser !== 'undefined') {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(String(value), 'text/html');
-      return (doc.body && doc.body.textContent) ? doc.body.textContent : '';
+    const contentService = ChatNavExportService.getTurnContentService();
+    if (contentService) {
+      return contentService.stripHtml(value);
     }
+    return String(value || '').replace(/<[^>]+>/g, ' ');
+  }
 
-    return String(value).replace(/<[^>]+>/g, ' ');
+  static getTurnContentService() {
+    const candidate = (typeof window !== 'undefined' && window.ChatNavTurnContentService)
+      || (typeof globalThis !== 'undefined' && globalThis.ChatNavTurnContentService);
+    return candidate && typeof candidate.buildAssistantMarkdown === 'function' ? candidate : null;
   }
 
   static normalizeTurns(turns) {

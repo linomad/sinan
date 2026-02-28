@@ -9,10 +9,8 @@ const require = createRequire(import.meta.url);
 const TurndownService = require('turndown');
 const turndownPluginGfm = require('turndown-plugin-gfm');
 
-function loadExportService() {
-  const turnContentPath = path.resolve('src/content/core/turn-content-service.js');
-  const scriptPath = path.resolve('src/content/core/export-service.js');
-  const turnContentCode = fs.readFileSync(turnContentPath, 'utf8');
+function loadTurnContentService() {
+  const scriptPath = path.resolve('src/content/core/turn-content-service.js');
   const code = fs.readFileSync(scriptPath, 'utf8');
 
   const sandbox = {
@@ -20,37 +18,19 @@ function loadExportService() {
       TurndownService,
       turndownPluginGfm
     },
-    document: {
-      body: {
-        appendChild() {},
-        removeChild() {}
-      },
-      createElement() {
-        return {
-          click() {},
-          setAttribute() {},
-          remove() {}
-        };
-      }
-    },
-    URL: {
-      createObjectURL() { return 'blob:test'; },
-      revokeObjectURL() {}
-    },
-    Blob,
-    location: { href: 'https://chat.example.com/c/abc' }
+    DOMParser: globalThis.DOMParser,
+    document: {}
   };
 
   vm.createContext(sandbox);
-  vm.runInContext(turnContentCode, sandbox, { filename: turnContentPath });
   vm.runInContext(code, sandbox, { filename: scriptPath });
-  return sandbox.window.ChatNavExportService;
+  return sandbox.window.ChatNavTurnContentService;
 }
 
-test('ExportService converts rich HTML to markdown with code fences and list items', () => {
-  const ExportService = loadExportService();
+test('TurnContentService converts rich HTML to markdown with code fences and list items', () => {
+  const TurnContentService = loadTurnContentService();
 
-  const markdown = ExportService.htmlToMarkdown(
+  const markdown = TurnContentService.htmlToMarkdown(
     '<h2>Plan</h2><p>Hello <strong>World</strong></p><ul><li>One</li><li>Two</li></ul><pre><code class="language-js">const x = 1;\\nconsole.log(x);</code></pre>'
   );
 
@@ -62,10 +42,10 @@ test('ExportService converts rich HTML to markdown with code fences and list ite
   assert.match(markdown, /const x = 1;/);
 });
 
-test('ExportService prefers assistant rich segments over flattened assistantText', () => {
-  const ExportService = loadExportService();
+test('TurnContentService prefers assistant rich segments over flattened assistantText', () => {
+  const TurnContentService = loadTurnContentService();
 
-  const assistantMarkdown = ExportService.buildAssistantMarkdown({
+  const assistantMarkdown = TurnContentService.buildAssistantMarkdown({
     assistantText: 'flattened text fallback',
     assistantSegments: [
       {

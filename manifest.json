@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sinan (司南)",
-  "version": "1.1.0",
+  "version": "2.0",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "icons": {
     "16": "assets/icon-v1-reference-transparent-128.png",
@@ -47,6 +47,8 @@
         "src/content/adapters/yuanbao-adapter.js",
         "src/content/vendor/turndown.js",
         "src/content/vendor/turndown-plugin-gfm.js",
+        "src/content/core/turn-content-service.js",
+        "src/content/core/toc-service.js",
         "src/content/core/export-service.js",
         "src/content/core/sidebar.js",
         "src/content/content.js"

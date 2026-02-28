@@ -5,7 +5,9 @@ import vm from 'node:vm';
 import path from 'node:path';
 
 function loadExportService() {
+  const turnContentPath = path.resolve('src/content/core/turn-content-service.js');
   const scriptPath = path.resolve('src/content/core/export-service.js');
+  const turnContentCode = fs.readFileSync(turnContentPath, 'utf8');
   const code = fs.readFileSync(scriptPath, 'utf8');
 
   const sandbox = {
@@ -32,6 +34,7 @@ function loadExportService() {
   };
 
   vm.createContext(sandbox);
+  vm.runInContext(turnContentCode, sandbox, { filename: turnContentPath });
   vm.runInContext(code, sandbox, { filename: scriptPath });
   return sandbox.window.ChatNavExportService;
 }

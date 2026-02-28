@@ -13,6 +13,9 @@ class SidebarUI {
     this.hasMessages = false;
     this.activeId = null;
     this.selectedIds = new Set();
+    this.turnMap = new Map();
+    this.tocCache = new Map();
+    this.expandedTocId = null;
     this.intersectionObserver = null;
     this.themeObserver = null;
     this.mutationObserver = null;
@@ -156,6 +159,160 @@ class SidebarUI {
     this.updateExportButtonState();
   }
 
+  toggleTocItem(id) {
+    if (!id) return;
+
+    if (this.expandedTocId === id) {
+      this.expandedTocId = null;
+    } else {
+      this.expandedTocId = id;
+      this.resolveTocItems(id);
+    }
+
+    this.updateMessages();
+  }
+
+  syncTurnMap(turns) {
+    const nextTurnMap = new Map();
+    const list = Array.isArray(turns) ? turns : [];
+
+    list.forEach((turn) => {
+      const userId = turn && turn.user && turn.user.id;
+      if (userId) {
+        nextTurnMap.set(userId, turn);
+      }
+    });
+
+    this.turnMap = nextTurnMap;
+  }
+
+  syncTransientState(messageIds) {
+    if (this.selectedIds.size > 0) {
+      this.selectedIds = new Set(
+        Array.from(this.selectedIds).filter(id => messageIds.has(id))
+      );
+    }
+
+    if (this.expandedTocId && !messageIds.has(this.expandedTocId)) {
+      this.expandedTocId = null;
+    }
+
+    if (this.tocCache.size > 0) {
+      this.tocCache = new Map(
+        Array.from(this.tocCache.entries()).filter(([id]) => messageIds.has(id))
+      );
+    }
+
+    if (this.activeId && !messageIds.has(this.activeId)) {
+      this.activeId = null;
+    }
+  }
+
+  hasTocCandidate(turn) {
+    if (!turn) return false;
+
+    const segments = Array.isArray(turn.assistantSegments) ? turn.assistantSegments : [];
+    return segments.some((segment) => {
+      const root = segment && segment.element;
+      if (!root || typeof root.querySelector !== 'function') return false;
+      return !!root.querySelector('h1,h2,h3,h4,h5,h6');
+    });
+  }
+
+  resolveTocItems(id) {
+    if (!id) return [];
+    if (this.tocCache.has(id)) return this.tocCache.get(id);
+
+    const turn = this.turnMap.get(id);
+    const tocService = window.ChatNavTocService;
+    const rawItems = (turn && tocService && typeof tocService.extractTurnDomHeadings === 'function')
+      ? tocService.extractTurnDomHeadings(turn)
+      : [];
+
+    const normalizedItems = Array.isArray(rawItems)
+      ? rawItems
+        .filter(item => item && typeof item.text === 'string' && item.text.trim())
+        .map(item => ({
+          level: Math.max(1, Math.min(6, Number(item.level) || 1)),
+          text: item.text.trim(),
+          segmentIndex: Number(item.segmentIndex) || 0,
+          headingIndex: Number(item.headingIndex) || 0,
+          targetElement: item.targetElement || null
+        }))
+      : [];
+
+    this.tocCache.set(id, normalizedItems);
+    return normalizedItems;
+  }
+
+  buildTocListMarkup(id) {
+    const items = this.resolveTocItems(id);
+    if (items.length === 0) {
+      return '<div class="nav-toc-empty">No sections</div>';
+    }
+
+    return items.map((item, index) => `
+      <button class="nav-toc-item toc-entry-btn level-${item.level}" type="button" data-id="${SidebarUI.escapeHtml(id)}" data-index="${index}" title="${SidebarUI.escapeHtml(item.text)}">
+        ${SidebarUI.escapeHtml(item.text)}
+      </button>
+    `).join('');
+  }
+
+  getTocToggleIconMarkup(isExpanded) {
+    if (isExpanded) {
+      return `
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="m18 15-6-6-6 6"></path>
+        </svg>
+      `;
+    }
+
+    return `
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    `;
+  }
+
+  buildTocToggleButtonMarkup(messageId, isExpanded) {
+    return `
+      <button class="toc-toggle-btn" type="button" data-id="${SidebarUI.escapeHtml(messageId)}" title="Toggle response outline" aria-label="Toggle response outline">
+        <span class="toc-icon" aria-hidden="true">
+          ${this.getTocToggleIconMarkup(isExpanded)}
+        </span>
+      </button>
+    `;
+  }
+
+  buildNavItemMarkup(msg) {
+    const turn = this.turnMap.get(msg.id);
+    const isActive = msg.id === this.activeId;
+    const isSelected = this.isExportMode && this.selectedIds.has(msg.id);
+    const isExpanded = this.expandedTocId === msg.id;
+    const hasToc = this.hasTocCandidate(turn);
+
+    const tocButtonMarkup = hasToc
+      ? this.buildTocToggleButtonMarkup(msg.id, isExpanded)
+      : '';
+    const tocMarkup = hasToc && isExpanded
+      ? `
+        <div class="nav-toc">
+          ${this.buildTocListMarkup(msg.id)}
+        </div>
+      `
+      : '';
+
+    return `
+      <div class="nav-item ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''} ${isExpanded ? 'toc-expanded' : ''}" data-id="${SidebarUI.escapeHtml(msg.id)}" title="${SidebarUI.escapeHtml(msg.text)}">
+        <div class="nav-main">
+          <span class="nav-text">${SidebarUI.escapeHtml(msg.text)}</span>
+          ${tocButtonMarkup}
+        </div>
+        ${tocMarkup}
+      </div>
+    `;
+  }
+
   refreshNavItemStates(shouldScrollActiveIntoView) {
     if (!this.shadowRoot) return;
     const items = this.shadowRoot.querySelectorAll('.nav-item');
@@ -166,6 +323,10 @@ class SidebarUI {
 
       item.classList.toggle('active', isActive);
       item.classList.toggle('selected', isSelected);
+
+      if ((isActive || isSelected) && itemId) {
+        this.resolveTocItems(itemId);
+      }
 
       if (isActive && shouldScrollActiveIntoView) {
         item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -318,12 +479,44 @@ class SidebarUI {
       return;
     }
 
+    if (this.expandedTocId && this.expandedTocId !== id) {
+      this.expandedTocId = null;
+      this.updateMessages();
+    }
+
     this.setActiveItem(id);
 
     // Prioritize the element reference if valid and connected
     const target = msg.element && msg.element.isConnected ? msg.element : document.getElementById(id);
     if (target) {
       this.adapter.scrollToElement(target);
+    }
+  }
+
+  handleTocItemClick(id, indexValue) {
+    const index = Number(indexValue);
+    if (!id || !Number.isInteger(index) || index < 0) return;
+
+    const items = this.resolveTocItems(id);
+    const item = items[index];
+    if (!item) return;
+
+    const headingTarget = item.targetElement && item.targetElement.isConnected !== false
+      ? item.targetElement
+      : null;
+    if (headingTarget) {
+      this.adapter.scrollToElement(headingTarget);
+      return;
+    }
+
+    const turn = this.turnMap.get(id);
+    const segments = Array.isArray(turn?.assistantSegments) ? turn.assistantSegments : [];
+    const fallback = segments
+      .map(segment => segment && segment.element)
+      .find(element => element && element.isConnected !== false);
+
+    if (fallback) {
+      this.adapter.scrollToElement(fallback);
     }
   }
 
@@ -369,23 +562,24 @@ class SidebarUI {
     this.themeObserver = null;
     this.mutationObserver = null;
     this.toastTimer = null;
+    this.turnMap.clear();
+    this.tocCache.clear();
+    this.expandedTocId = null;
   }
 
   updateMessages() {
     const messages = this.adapter.getUserMessages();
+    const turns = typeof this.adapter.getConversationTurns === 'function'
+      ? this.adapter.getConversationTurns()
+      : [];
+    this.syncTurnMap(turns);
+
     const listContainer = this.shadowRoot.querySelector('.nav-list');
     if (!listContainer) return;
 
     this.hasMessages = messages.length > 0;
     const messageIds = new Set(messages.map(message => message.id));
-    if (this.selectedIds.size > 0) {
-      this.selectedIds = new Set(
-        Array.from(this.selectedIds).filter(id => messageIds.has(id))
-      );
-    }
-    if (this.activeId && !messageIds.has(this.activeId)) {
-      this.activeId = null;
-    }
+    this.syncTransientState(messageIds);
 
     if (messages.length === 0) {
       listContainer.innerHTML = '<div class="empty-state">No user messages found</div>';
@@ -398,18 +592,30 @@ class SidebarUI {
       return;
     }
 
-    listContainer.innerHTML = messages.map(msg => `
-      <div class="nav-item ${msg.id === this.activeId ? 'active' : ''} ${this.selectedIds.has(msg.id) ? 'selected' : ''}" data-id="${msg.id}" title="${SidebarUI.escapeHtml(msg.text)}">
-        <span class="nav-bullet"></span>
-        <span class="nav-text">${SidebarUI.escapeHtml(msg.text)}</span>
-      </div>
-    `).join('');
+    listContainer.innerHTML = messages.map(msg => this.buildNavItemMarkup(msg)).join('');
 
     this.shadowRoot.querySelectorAll('.nav-item').forEach((item, index) => {
       item.onclick = () => {
         const msg = messages[index];
         const id = item.getAttribute('data-id');
         this.handleNavItemClick(msg, id);
+      };
+    });
+
+    this.shadowRoot.querySelectorAll('.toc-toggle-btn').forEach((button) => {
+      button.onclick = (event) => {
+        event.stopPropagation();
+        const id = button.getAttribute('data-id');
+        this.toggleTocItem(id);
+      };
+    });
+
+    this.shadowRoot.querySelectorAll('.toc-entry-btn').forEach((button) => {
+      button.onclick = (event) => {
+        event.stopPropagation();
+        const id = button.getAttribute('data-id');
+        const index = button.getAttribute('data-index');
+        this.handleTocItemClick(id, index);
       };
     });
 
@@ -440,7 +646,6 @@ class SidebarUI {
           --item-hover-bg: rgba(0, 0, 0, 0.04);
           --item-active-bg: rgba(16, 163, 127, 0.08);
           --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-          --bullet-color: #D1D5DB;
           --secondary-btn-hover-bg: rgba(15, 23, 42, 0.08);
         }
 
@@ -453,7 +658,6 @@ class SidebarUI {
           --item-hover-bg: rgba(255, 255, 255, 0.06);
           --item-active-bg: rgba(16, 163, 127, 0.15);
           --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-          --bullet-color: #4B5563;
           --secondary-btn-hover-bg: rgba(255, 255, 255, 0.12);
         }
 
@@ -712,17 +916,20 @@ class SidebarUI {
         }
 
         .nav-item {
-          padding: 8px 12px;
+          padding: 8px 10px;
           margin-bottom: 2px;
           border-radius: 8px;
           font-size: 13px;
           color: var(--text-muted);
           cursor: pointer;
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
           transition: all 0.2s;
           position: relative;
+        }
+
+        .nav-main {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
         }
 
         .nav-item:hover {
@@ -744,23 +951,8 @@ class SidebarUI {
           box-shadow: inset 0 0 0 1px rgba(16, 163, 127, 0.6);
         }
 
-        .nav-item.active .nav-bullet {
-          background: var(--primary-color);
-          transform: scale(1.2);
-          box-shadow: 0 0 8px rgba(16, 163, 127, 0.4);
-        }
-
-        .nav-bullet {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: var(--bullet-color);
-          margin-top: 7px;
-          flex-shrink: 0;
-          transition: all 0.3s;
-        }
-
         .nav-text {
+          flex: 1;
           line-height: 1.5;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -768,6 +960,104 @@ class SidebarUI {
           overflow: hidden;
           word-break: break-word;
         }
+
+        .toc-toggle-btn {
+          width: 18px;
+          height: 18px;
+          border: none;
+          border-radius: 4px;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          color: currentColor;
+          cursor: pointer;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          flex-shrink: 0;
+          transition: opacity 0.15s ease, visibility 0.15s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-item.active .toc-toggle-btn {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+        }
+
+        .toc-toggle-btn:hover {
+          background: var(--item-hover-bg);
+          color: var(--primary-color);
+        }
+
+        .toc-icon {
+          display: inline-flex;
+          width: 14px;
+          height: 14px;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+        }
+
+        .toc-icon svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+          stroke: currentColor;
+          fill: none;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .nav-toc {
+          margin-top: 6px;
+          padding: 6px 8px;
+          border-radius: 6px;
+        }
+
+        .nav-toc-item,
+        .nav-toc-empty {
+          font-size: 11px;
+          line-height: 1.45;
+          color: var(--text-muted);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .nav-toc-item {
+          width: 100%;
+          border: none;
+          background: transparent;
+          text-align: left;
+          cursor: pointer;
+          padding: 1px 0;
+          margin: 0;
+          display: block;
+          font: inherit;
+          color: var(--text-muted);
+        }
+
+        .nav-toc-item:hover {
+          color: var(--text-color);
+        }
+
+        .nav-toc-item:focus-visible,
+        .nav-toc-item:active {
+          color: var(--text-color);
+        }
+
+        .nav-toc-empty {
+          padding: 1px 0;
+        }
+
+        .nav-toc-item.level-2 { padding-left: 10px; }
+        .nav-toc-item.level-3 { padding-left: 20px; }
+        .nav-toc-item.level-4 { padding-left: 30px; }
+        .nav-toc-item.level-5 { padding-left: 40px; }
+        .nav-toc-item.level-6 { padding-left: 50px; }
 
         .empty-state {
           padding: 30px 20px;
