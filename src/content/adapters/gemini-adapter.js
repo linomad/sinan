@@ -94,24 +94,56 @@ class GeminiAdapter extends BaseAdapter {
   extractMessagePayload(element, preferredSelectors = []) {
     for (const selector of preferredSelectors) {
       const match = element.querySelector(selector);
-      if (match && match.innerText) {
-        const cleaned = match.innerText.trim().replace(/\n+/g, " ");
-        if (cleaned) {
-          return {
-            text: cleaned,
-            html: match.innerHTML || ''
-          };
-        }
+      if (!match) continue;
+
+      const payload = this.extractVisiblePayload(match);
+      if (payload.text) {
+        return payload;
       }
     }
 
-    const clone = element.cloneNode(true);
-    const junk = clone.querySelectorAll('button, mat-icon');
-    junk.forEach(node => node.remove());
+    return this.extractVisiblePayload(element);
+  }
+
+  extractVisiblePayload(node) {
+    if (!node) {
+      return { text: '', html: '' };
+    }
+
+    const clone = typeof node.cloneNode === 'function' ? node.cloneNode(true) : node;
+    this.removeNonContentNodes(clone);
     return {
-      text: (clone.innerText || "").trim().replace(/\n+/g, " "),
+      text: this.normalizeMessageText(clone.innerText || clone.textContent || ''),
       html: clone.innerHTML || ''
     };
+  }
+
+  removeNonContentNodes(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+
+    const removableSelectors = [
+      'button',
+      'mat-icon',
+      '[hidden]',
+      '[aria-hidden="true"]',
+      '.cdk-visually-hidden',
+      '.visually-hidden',
+      '.sr-only',
+      '.screen-reader-only'
+    ];
+
+    const removableNodes = root.querySelectorAll(removableSelectors.join(','));
+    removableNodes.forEach((node) => {
+      if (node && typeof node.remove === 'function') {
+        node.remove();
+      }
+    });
+  }
+
+  normalizeMessageText(text) {
+    return String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   observeMutations(callback) {

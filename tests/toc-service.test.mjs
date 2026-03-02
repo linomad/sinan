@@ -67,6 +67,19 @@ test('TocService extracts turn toc from assistant markdown content', () => {
 test('TocService extracts only standard h1-h6 headings from assistant DOM segments', () => {
   const TocService = loadTocService();
 
+  const hiddenHeading = {
+    tagName: 'H2',
+    textContent: ' Gemini 说 ',
+    classList: {
+      contains(className) {
+        return className === 'cdk-visually-hidden';
+      }
+    },
+    getAttribute(name) {
+      if (name === 'aria-hidden') return null;
+      return null;
+    }
+  };
   const headingH2 = { tagName: 'H2', textContent: ' Overview ' };
   const headingH4 = { tagName: 'H4', textContent: ' Deep Dive ' };
   const segmentEl = {
@@ -74,7 +87,7 @@ test('TocService extracts only standard h1-h6 headings from assistant DOM segmen
       if (selector !== 'h1,h2,h3,h4,h5,h6') {
         throw new Error('unexpected selector');
       }
-      return [headingH2, headingH4];
+      return [hiddenHeading, headingH2, headingH4];
     }
   };
   const nonStandardSegmentEl = {
@@ -100,7 +113,7 @@ test('TocService extracts only standard h1-h6 headings from assistant DOM segmen
   ));
 
   assert.deepEqual(plainToc, [
-    { level: 2, text: 'Overview', segmentIndex: 0, headingIndex: 0 },
-    { level: 4, text: 'Deep Dive', segmentIndex: 0, headingIndex: 1 }
+    { level: 2, text: 'Overview', segmentIndex: 0, headingIndex: 1 },
+    { level: 4, text: 'Deep Dive', segmentIndex: 0, headingIndex: 2 }
   ]);
 });

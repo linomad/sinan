@@ -36,6 +36,8 @@ class ChatNavTocService {
 
       const headingElements = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'));
       headingElements.forEach((headingElement, headingIndex) => {
+        if (!ChatNavTocService.isVisibleHeading(headingElement)) return;
+
         const level = ChatNavTocService.parseHeadingLevel(headingElement);
         if (!level) return;
 
@@ -144,12 +146,73 @@ class ChatNavTocService {
     return Number(match[1]);
   }
 
+  static isVisibleHeading(element) {
+    if (!element) return false;
+
+    if (element.hidden === true) return false;
+    if (ChatNavTocService.isAriaHidden(element)) return false;
+    if (ChatNavTocService.hasHiddenUtilityClass(element)) return false;
+    if (ChatNavTocService.isHiddenByInlineStyle(element)) return false;
+    if (ChatNavTocService.isInsideHiddenAncestor(element)) return false;
+
+    return true;
+  }
+
+  static isAriaHidden(element) {
+    if (!element || typeof element.getAttribute !== 'function') return false;
+    const ariaHidden = element.getAttribute('aria-hidden');
+    return String(ariaHidden || '').toLowerCase() === 'true';
+  }
+
+  static hasHiddenUtilityClass(element) {
+    if (!element) return false;
+
+    const hiddenClassNames = [
+      'cdk-visually-hidden',
+      'visually-hidden',
+      'sr-only',
+      'screen-reader-only'
+    ];
+
+    if (element.classList && typeof element.classList.contains === 'function') {
+      return hiddenClassNames.some(className => element.classList.contains(className));
+    }
+
+    const className = typeof element.className === 'string' ? element.className : '';
+    if (!className) return false;
+
+    const classTokens = className.split(/\s+/);
+    return hiddenClassNames.some(hiddenClassName => classTokens.includes(hiddenClassName));
+  }
+
+  static isHiddenByInlineStyle(element) {
+    if (!element || typeof element.getAttribute !== 'function') return false;
+    const style = String(element.getAttribute('style') || '');
+    if (!style) return false;
+    return /display\s*:\s*none/i.test(style) || /visibility\s*:\s*hidden/i.test(style);
+  }
+
+  static isInsideHiddenAncestor(element) {
+    if (!element || typeof element.closest !== 'function') return false;
+    const hiddenAncestorSelector = [
+      '[hidden]',
+      '[aria-hidden="true"]',
+      '.cdk-visually-hidden',
+      '.visually-hidden',
+      '.sr-only',
+      '.screen-reader-only'
+    ].join(',');
+    return !!element.closest(hiddenAncestorSelector);
+  }
+
   static buildSegmentHeadingSignature(root) {
     if (!root || typeof root.querySelectorAll !== 'function') return 'none';
     const headingElements = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'));
     if (headingElements.length === 0) return 'none';
 
     return headingElements.map((headingElement) => {
+      if (!ChatNavTocService.isVisibleHeading(headingElement)) return '';
+
       const level = ChatNavTocService.parseHeadingLevel(headingElement);
       const text = ChatNavTocService.normalizeHeadingText(
         headingElement.textContent || headingElement.innerText || ''
