@@ -87,6 +87,19 @@ test('ExportService truncates turn heading but preserves full body text', () => 
   assert.match(block, /assistant/);
 });
 
+test('ExportService renders user message body as markdown quote', () => {
+  const ExportService = loadExportService();
+
+  const block = ExportService.buildTurnBlock({
+    id: 'u1',
+    user: { id: 'u1', text: 'Line one\n\nLine three' },
+    assistantText: 'assistant'
+  });
+
+  assert.match(block, /\n> Line one\n>\n> Line three\n/);
+  assert.doesNotMatch(block, /\nLine one\n\nLine three\n/);
+});
+
 test('ExportService keeps DOM order for multiple turn blocks', () => {
   const ExportService = loadExportService();
 

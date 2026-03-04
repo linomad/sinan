@@ -59,15 +59,29 @@ class ChatNavExportService {
     if (!userText) return '';
 
     const heading = ChatNavExportService.buildTurnHeading(userText, 64);
+    const userQuote = ChatNavExportService.buildUserQuoteMarkdown(userText);
     const assistantText = ChatNavExportService.buildAssistantMarkdown(turn) || '(no assistant response found)';
 
     return [
       `## ${heading}`,
       '',
-      userText,
+      userQuote,
       '',
       assistantText
     ].join('\n');
+  }
+
+  static buildUserQuoteMarkdown(text) {
+    const normalized = String(text || '')
+      .replace(/\r\n/g, '\n')
+      .trim();
+
+    if (!normalized) return '>';
+
+    return normalized
+      .split('\n')
+      .map(line => (line ? `> ${line}` : '>'))
+      .join('\n');
   }
 
   static buildTurnHeading(text, maxLen = 64) {
