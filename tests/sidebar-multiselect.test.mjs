@@ -144,6 +144,24 @@ function createRenderHarness(SidebarUI, { messages = [] } = {}) {
   };
 }
 
+function createClassList(classes = []) {
+  const classSet = new Set(classes);
+  return {
+    contains(className) {
+      return classSet.has(className);
+    }
+  };
+}
+
+function createThemeNode({ classes = [], attrs = {} } = {}) {
+  return {
+    classList: createClassList(classes),
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attrs, name) ? attrs[name] : null;
+    }
+  };
+}
+
 test('SidebarUI exports selected turns in conversation order', () => {
   const { SidebarUI, sandbox } = loadSidebar();
 
@@ -502,6 +520,75 @@ test('SidebarUI toggles export-mode class while entering and exiting export mode
   assert.equal(sidebarEl.classList.contains('export-mode'), true);
   sidebar.exitExportMode();
   assert.equal(sidebarEl.classList.contains('export-mode'), false);
+});
+
+test('SidebarUI detects dark mode from html data-mode attribute', () => {
+  const { SidebarUI, sandbox } = loadSidebar();
+  sandbox.window.matchMedia = () => ({ matches: true });
+
+  sandbox.document.documentElement = createThemeNode({
+    attrs: { 'data-mode': 'dark' }
+  });
+  sandbox.document.body = createThemeNode();
+
+  const sidebar = new SidebarUI({});
+  assert.equal(sidebar.detectDarkMode(), true);
+
+  sandbox.document.documentElement = createThemeNode({
+    attrs: { 'data-mode': 'light' }
+  });
+  assert.equal(sidebar.detectDarkMode(), false);
+});
+
+test('SidebarUI theme observer listens to data-mode and data-color-scheme changes', () => {
+  const { SidebarUI, sandbox } = loadSidebar();
+  const observeCalls = [];
+
+  sandbox.window.matchMedia = () => ({ matches: false });
+  sandbox.document.documentElement = createThemeNode({
+    attrs: { 'data-mode': 'dark' }
+  });
+  sandbox.document.body = createThemeNode();
+  sandbox.MutationObserver = class MutationObserverMock {
+    constructor(callback) {
+      this.callback = callback;
+    }
+
+    observe(target, options) {
+      observeCalls.push({ target, options });
+    }
+
+    disconnect() {}
+  };
+
+  const sidebarClassList = new Set();
+  const sidebar = new SidebarUI({});
+  sidebar.shadowRoot = {
+    querySelector(selector) {
+      if (selector !== '#sidebar') return null;
+      return {
+        classList: {
+          add(className) {
+            sidebarClassList.add(className);
+          },
+          remove(className) {
+            sidebarClassList.delete(className);
+          }
+        }
+      };
+    }
+  };
+
+  sidebar.initThemeAutoSwitch();
+
+  assert.equal(sidebarClassList.has('dark'), true);
+  assert.equal(observeCalls.length, 2);
+
+  observeCalls.forEach(({ options }) => {
+    assert.equal(options.attributes, true);
+    assert.ok(options.attributeFilter.includes('data-mode'));
+    assert.ok(options.attributeFilter.includes('data-color-scheme'));
+  });
 });
 
 test('SidebarUI collapse toggle keeps toggle button markup stable', () => {

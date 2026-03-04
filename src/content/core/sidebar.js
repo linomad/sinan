@@ -72,11 +72,11 @@ class SidebarUI {
 
     this.themeObserver.observe(document.documentElement, { 
       attributes: true, 
-      attributeFilter: ['class', 'data-theme', 'style'] 
+      attributeFilter: ['class', 'data-theme', 'data-mode', 'data-color-scheme', 'style'] 
     });
     this.themeObserver.observe(document.body, { 
       attributes: true, 
-      attributeFilter: ['class', 'data-theme', 'style'] 
+      attributeFilter: ['class', 'data-theme', 'data-mode', 'data-color-scheme', 'style'] 
     });
   }
 
@@ -100,14 +100,23 @@ class SidebarUI {
       return false;
     }
 
-    // 3. Check data-theme or data-color-scheme attributes
+    // 3. Check explicit theme attributes.
+    // Claude uses data-mode="dark" on <html>.
     const htmlTheme = docEl.getAttribute('data-theme');
     const bodyTheme = bodyEl.getAttribute('data-theme');
+    const htmlMode = docEl.getAttribute('data-mode');
+    const bodyMode = bodyEl.getAttribute('data-mode');
     const colorScheme = docEl.getAttribute('data-color-scheme') || bodyEl.getAttribute('data-color-scheme');
     
     // If any theme attribute exists, respect it and skip fallback
-    if (htmlTheme || bodyTheme || colorScheme) {
-      return htmlTheme === 'dark' || bodyTheme === 'dark' || colorScheme === 'dark';
+    if (htmlTheme || bodyTheme || htmlMode || bodyMode || colorScheme) {
+      return (
+        htmlTheme === 'dark' ||
+        bodyTheme === 'dark' ||
+        htmlMode === 'dark' ||
+        bodyMode === 'dark' ||
+        colorScheme === 'dark'
+      );
     }
 
     // 4. Fallback: System preference (only if no explicit page theme indicators found)
