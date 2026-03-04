@@ -3,6 +3,7 @@
 
   const adapters = [
     new window.ChatGPTAdapter(),
+    new window.ClaudeAdapter(),
     new window.DoubaoAdapter(),
     new window.GeminiAdapter(),
     new window.QwenAdapter(),

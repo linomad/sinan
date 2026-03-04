@@ -6,6 +6,7 @@ chrome.action.onClicked.addListener((tab) => {
   // List of supported domains (must match manifest content_scripts matches)
   const supportedDomains = [
     'chatgpt.com',
+    'claude.ai',
     'gemini.google.com',
     'doubao.com',
     'chat.qwen.ai',

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sinan (司南)",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "icons": {
     "16": "assets/icon-v1-reference-transparent-128.png",
@@ -20,6 +20,7 @@
   },
   "host_permissions": [
     "https://chatgpt.com/*",
+    "https://claude.ai/*",
     "https://gemini.google.com/*",
     "https://www.doubao.com/*",
     "https://chat.qwen.ai/*",
@@ -30,6 +31,7 @@
     {
       "matches": [
         "https://chatgpt.com/*",
+        "https://claude.ai/*",
         "https://gemini.google.com/*",
         "https://www.doubao.com/*",
         "https://chat.qwen.ai/*",
@@ -40,6 +42,7 @@
         "src/content/utils/hash-utils.js",
         "src/content/adapters/base-adapter.js",
         "src/content/adapters/chatgpt-adapter.js",
+        "src/content/adapters/claude-adapter.js",
         "src/content/adapters/doubao-adapter.js",
         "src/content/adapters/gemini-adapter.js",
         "src/content/adapters/qwen-adapter.js",
