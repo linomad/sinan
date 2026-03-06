@@ -13,6 +13,10 @@ class ChatGPTAdapter extends BaseAdapter {
     return "chatgpt.com";
   }
 
+  get excludedPathPrefixes() {
+    return ["/codex"];
+  }
+
   getScrollContainer() {
     const scrollableDiv = document.querySelector('div[class*="overflow-y-auto"]');
     return scrollableDiv || document.documentElement;

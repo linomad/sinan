@@ -18,11 +18,31 @@ class BaseAdapter {
   }
 
   /**
+   * Returns path prefixes that should disable this adapter on the current site.
+   * e.g. ["/settings", "/workspace/internal"]
+   * @returns {string[]}
+   */
+  get excludedPathPrefixes() {
+    return [];
+  }
+
+  /**
    * Checks if the current page is compatible with this adapter.
    * @returns {boolean}
    */
   isCompatible() {
-    return window.location.hostname.includes(this.domain);
+    const loc = (typeof window !== 'undefined' && window.location) ? window.location : null;
+    const hostname = loc && typeof loc.hostname === 'string' ? loc.hostname : '';
+    const pathname = loc && typeof loc.pathname === 'string' ? loc.pathname : '';
+
+    if (!hostname.includes(this.domain)) return false;
+    return !this.isExcludedPath(pathname);
+  }
+
+  isExcludedPath(pathname) {
+    const currentPath = BaseAdapter.normalizePath(pathname);
+    const blockedPrefixes = Array.isArray(this.excludedPathPrefixes) ? this.excludedPathPrefixes : [];
+    return blockedPrefixes.some(prefix => BaseAdapter.isPathPrefixMatch(currentPath, prefix));
   }
 
   /**
@@ -193,6 +213,27 @@ class BaseAdapter {
       : (typeof window !== 'undefined' ? window.Node : null);
     const followingMask = nodeType ? nodeType.DOCUMENT_POSITION_FOLLOWING : 4;
     return !!(left.element.compareDocumentPosition(right.element) & followingMask);
+  }
+
+  static normalizePath(pathname) {
+    if (typeof pathname !== 'string' || pathname.length === 0) return '/';
+
+    let normalized = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    if (normalized.length > 1) {
+      normalized = normalized.replace(/\/+$/g, '');
+    }
+
+    return normalized || '/';
+  }
+
+  static isPathPrefixMatch(pathname, prefix) {
+    if (typeof prefix !== 'string' || prefix.length === 0) return false;
+
+    const normalizedPath = BaseAdapter.normalizePath(pathname);
+    const normalizedPrefix = BaseAdapter.normalizePath(prefix);
+
+    if (normalizedPath === normalizedPrefix) return true;
+    return normalizedPath.startsWith(`${normalizedPrefix}/`);
   }
 }
 

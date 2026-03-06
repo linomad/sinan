@@ -13,6 +13,10 @@ class DoubaoAdapter extends BaseAdapter {
     return "doubao.com";
   }
 
+  get excludedPathPrefixes() {
+    return ["/chat/settings"];
+  }
+
   getScrollContainer() {
     // Priority 1: The container explicitly marked as scroll view or message list
     const candidates = [
