@@ -1,0 +1,62 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A140F"/>
+      <stop offset="1" stop-color="#0D0B09"/>
+    </linearGradient>
+    <radialGradient id="warmGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1228 128) rotate(128) scale(338)">
+      <stop stop-color="#D39A5C" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#D39A5C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="baseGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(238 720) rotate(38) scale(270)">
+      <stop stop-color="#8D633B" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#8D633B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cardGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1162 448) rotate(90) scale(230 150)">
+      <stop stop-color="#F4E8DA" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#F4E8DA" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="signal" x1="806" y1="510" x2="1074" y2="444" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E1AF69"/>
+      <stop offset="0.52" stop-color="#C88B4A"/>
+      <stop offset="1" stop-color="#8B613B"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" rx="24" fill="url(#bg)"/>
+  <circle cx="1228" cy="128" r="312" fill="url(#warmGlow)"/>
+  <circle cx="238" cy="720" r="260" fill="url(#baseGlow)"/>
+
+  <rect x="150" y="130" width="1300" height="640" rx="24" stroke="#3C2F23" stroke-width="2"/>
+
+  <rect x="190" y="196" width="746" height="508" rx="24" fill="#120E0B" fill-opacity="0.16" stroke="#241B14"/>
+  <rect x="228" y="236" width="182" height="16" rx="8" fill="#2A2118"/>
+  <rect x="228" y="266" width="118" height="10" rx="5" fill="#241D16"/>
+
+  <rect x="228" y="320" width="606" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="366" width="646" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="412" width="584" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="458" width="622" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="504" width="576" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="550" width="654" height="12" rx="6" fill="#241D16"/>
+  <rect x="228" y="596" width="536" height="12" rx="6" fill="#241D16"/>
+
+  <circle cx="806" cy="510" r="14" fill="#D9A463" fill-opacity="0.08" stroke="#D9A463" stroke-opacity="0.54" stroke-width="1.5"/>
+  <circle cx="806" cy="510" r="4.5" fill="#D9A463"/>
+
+  <path d="M806 510C874 500 934 472 992 454C1024 444 1046 440 1074 440" stroke="#E0AD69" stroke-opacity="0.12" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M806 510C876 500 938 472 998 454C1028 446 1050 442 1074 440" stroke="url(#signal)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M760 372C876 372 952 384 1074 388" stroke="#C98B4A" stroke-opacity="0.12" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M778 418C886 418 960 424 1074 492" stroke="#C98B4A" stroke-opacity="0.08" stroke-width="1.8" stroke-linecap="round"/>
+
+  <rect x="1046" y="254" width="234" height="390" rx="24" fill="#F3E7D7" fill-opacity="0.045" stroke="#E9D7C1" stroke-opacity="0.22"/>
+  <rect x="1046" y="254" width="234" height="390" rx="24" fill="url(#cardGlow)"/>
+  <rect x="1080" y="296" width="118" height="12" rx="6" fill="#E8D6C1" fill-opacity="0.18"/>
+  <rect x="1080" y="386" width="156" height="14" rx="7" fill="#2A2118" fill-opacity="0.88"/>
+  <rect x="1070" y="434" width="178" height="26" rx="13" fill="#F2E4D4" fill-opacity="0.14" stroke="#E8D3BB" stroke-opacity="0.46"/>
+  <rect x="1106" y="442" width="106" height="10" rx="5" fill="#F0E0CD" fill-opacity="0.9"/>
+  <rect x="1080" y="492" width="142" height="14" rx="7" fill="#2A2118" fill-opacity="0.84"/>
+  <rect x="1080" y="544" width="124" height="14" rx="7" fill="#2A2118" fill-opacity="0.82"/>
+
+  <circle cx="1074" cy="440" r="5.5" fill="#D8A15E"/>
+</svg>
