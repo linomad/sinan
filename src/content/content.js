@@ -5,6 +5,7 @@
     new window.ChatGPTAdapter(),
     new window.ClaudeAdapter(),
     new window.DoubaoAdapter(),
+    new window.DeepSeekAdapter(),
     new window.GeminiAdapter(),
     new window.QwenAdapter(),
     new window.PerplexityAdapter(),

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sinan (司南)",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "Your Compass for AI Conversations. 纵览千言，心有司南。",
   "icons": {
     "16": "assets/icon-v1-reference-transparent-128.png",
@@ -23,6 +23,7 @@
     "https://claude.ai/*",
     "https://gemini.google.com/*",
     "https://www.doubao.com/*",
+    "https://chat.deepseek.com/*",
     "https://chat.qwen.ai/*",
     "https://www.perplexity.ai/*",
     "https://yuanbao.tencent.com/*"
@@ -34,6 +35,7 @@
         "https://claude.ai/*",
         "https://gemini.google.com/*",
         "https://www.doubao.com/*",
+        "https://chat.deepseek.com/*",
         "https://chat.qwen.ai/*",
         "https://www.perplexity.ai/*",
         "https://yuanbao.tencent.com/*"
@@ -44,6 +46,7 @@
         "src/content/adapters/chatgpt-adapter.js",
         "src/content/adapters/claude-adapter.js",
         "src/content/adapters/doubao-adapter.js",
+        "src/content/adapters/deepseek-adapter.js",
         "src/content/adapters/gemini-adapter.js",
         "src/content/adapters/qwen-adapter.js",
         "src/content/adapters/perplexity-adapter.js",

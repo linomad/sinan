@@ -94,3 +94,29 @@ test('DoubaoAdapter excludes /chat/settings routes but keeps conversation routes
   const allowedAdapter = new DoubaoAdapterAllowed();
   assert.equal(allowedAdapter.isCompatible(), true);
 });
+
+test('DeepSeekAdapter keeps /a/chat routes compatible but excludes non-chat routes', () => {
+  const DeepSeekAdapterBlocked = loadAdapterClass({
+    adapterScript: 'src/content/adapters/deepseek-adapter.js',
+    adapterClassName: 'DeepSeekAdapter',
+    location: {
+      hostname: 'chat.deepseek.com',
+      pathname: '/pricing'
+    }
+  });
+
+  const blockedAdapter = new DeepSeekAdapterBlocked();
+  assert.equal(blockedAdapter.isCompatible(), false);
+
+  const DeepSeekAdapterAllowed = loadAdapterClass({
+    adapterScript: 'src/content/adapters/deepseek-adapter.js',
+    adapterClassName: 'DeepSeekAdapter',
+    location: {
+      hostname: 'chat.deepseek.com',
+      pathname: '/a/chat/s/abc123'
+    }
+  });
+
+  const allowedAdapter = new DeepSeekAdapterAllowed();
+  assert.equal(allowedAdapter.isCompatible(), true);
+});
