@@ -33,8 +33,7 @@ class YuanbaoAdapter extends BaseAdapter {
     userElements.forEach((el) => {
       // Text content selector: .hyc-content-text
       const contentEl = el.querySelector('.hyc-content-text');
-      let text = contentEl ? contentEl.innerText : "";
-      text = text.trim().replace(/\n+/g, " ");
+      const text = this.normalizeMessageText(contentEl ? contentEl.innerText : "");
 
       if (!text) return;
 
@@ -61,9 +60,8 @@ class YuanbaoAdapter extends BaseAdapter {
     const assistantElements = document.querySelectorAll('.agent-chat__list__item--ai, .agent-chat__list__item--bot');
 
     assistantElements.forEach((el) => {
-      const contentEl = el.querySelector('.hyc-content-text');
-      let text = contentEl ? contentEl.innerText : "";
-      text = text.trim().replace(/\n+/g, " ");
+      const contentEl = this.getAssistantContentElement(el);
+      const text = this.normalizeMessageText(contentEl ? (contentEl.innerText || contentEl.textContent || '') : '');
       if (!text) return;
 
       const hash = window.ChatNavUtils.hashCode(text);
@@ -77,11 +75,40 @@ class YuanbaoAdapter extends BaseAdapter {
         id: navId,
         text,
         html: contentEl ? (contentEl.innerHTML || '') : '',
-        element: el
+        element: contentEl || el
       });
     });
 
     return messages;
+  }
+
+  getAssistantContentElement(assistantElement) {
+    if (!assistantElement || typeof assistantElement.querySelector !== 'function') {
+      return null;
+    }
+
+    const selectors = [
+      '.hyc-component-reasoner__text .hyc-common-markdown',
+      '.agent-chat__speech-text--box .hyc-common-markdown',
+      '.hyc-content-md .hyc-common-markdown',
+      '.hyc-content-text'
+    ];
+
+    for (const selector of selectors) {
+      const candidate = assistantElement.querySelector(selector);
+      if (!candidate) continue;
+
+      const text = this.normalizeMessageText(candidate.innerText || candidate.textContent || '');
+      if (!text) continue;
+
+      return candidate;
+    }
+
+    return null;
+  }
+
+  normalizeMessageText(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
   }
 
   observeMutations(callback) {

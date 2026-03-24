@@ -109,3 +109,49 @@ test('YuanbaoAdapter observeMutations falls back to body when chat-content is un
   assert.equal(observerInstances[0].observed[0].target, bodyNode);
 });
 
+test('YuanbaoAdapter extracts assistant markdown from reasoner final text block', () => {
+  const answerMarkdownNode = {
+    innerText: '一、工作流程\n二、技术原理',
+    innerHTML: '<h3>一、工作流程</h3><h3>二、技术原理</h3>'
+  };
+  const thinkMarkdownNode = {
+    innerText: '这是思考过程，不应作为最终回答',
+    innerHTML: '<p>这是思考过程，不应作为最终回答</p>'
+  };
+  const assistantElement = {
+    id: '',
+    querySelector(selector) {
+      if (selector === '.hyc-component-reasoner__text .hyc-common-markdown') return answerMarkdownNode;
+      if (selector === '.hyc-content-md .hyc-common-markdown') return thinkMarkdownNode;
+      if (selector === '.hyc-content-text') return null;
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.hyc-component-reasoner__text .hyc-common-markdown') return [answerMarkdownNode];
+      if (selector === '.hyc-content-md .hyc-common-markdown') return [thinkMarkdownNode, answerMarkdownNode];
+      return [];
+    }
+  };
+
+  const { YuanbaoAdapter } = loadYuanbaoAdapter({
+    querySelector() {
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.agent-chat__list__item--ai, .agent-chat__list__item--bot') {
+        return [assistantElement];
+      }
+      return [];
+    },
+    body: { tagName: 'BODY' },
+    documentElement: {}
+  });
+
+  const adapter = new YuanbaoAdapter();
+  const messages = adapter.getAssistantMessages();
+
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].text, '一、工作流程 二、技术原理');
+  assert.equal(messages[0].html, '<h3>一、工作流程</h3><h3>二、技术原理</h3>');
+  assert.equal(messages[0].element, answerMarkdownNode);
+});
