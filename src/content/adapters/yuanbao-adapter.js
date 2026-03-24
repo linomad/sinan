@@ -92,7 +92,10 @@ class YuanbaoAdapter extends BaseAdapter {
         this.debounceTimer = setTimeout(callback, 800);
     });
 
-    const target = document.querySelector('.agent-chat__list__content') || document.body;
+    const target = document.querySelector('#chat-content')
+      || document.querySelector('.agent-dialogue__content--common__content')
+      || document.querySelector('.agent-chat__list__content')
+      || document.body;
     this.observer.observe(target, { 
         childList: true, 
         subtree: true 
