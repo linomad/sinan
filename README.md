@@ -6,7 +6,7 @@ Sinan is your compass for web conversations. It turns your prompts into a floati
 
 ## ✨ Features
 
-- **Multi-Platform Support**: Works across supported conversation websites declared in extension host permissions.
+- **Multi-Platform Support**: Works on ChatGPT, Claude, Gemini, Doubao, DeepSeek, Qwen, Perplexity, and Yuanbao.
 - **Smart Navigation**: Extracts user queries and creates a clickable sidebar for instant scrolling.
 - **Assistant TOC (On-Demand)**: For each user turn, Sinan can extract the paired assistant response outline from standard headings (`h1`~`h6`) and provide clickable jump links.
 - **Markdown Export**: Enter export mode, multi-select turns, and download one high-fidelity Markdown file in conversation (DOM) order.
