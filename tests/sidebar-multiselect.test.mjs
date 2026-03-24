@@ -522,6 +522,31 @@ test('SidebarUI toggles export-mode class while entering and exiting export mode
   assert.equal(sidebarEl.classList.contains('export-mode'), false);
 });
 
+test('SidebarUI hides container when parsed user entries are zero and shows it once entries exist', () => {
+  const { SidebarUI } = loadSidebar();
+  const messages = [];
+  const { sidebar } = createRenderHarness(SidebarUI, { messages });
+  const container = {
+    style: {
+      display: 'block'
+    }
+  };
+
+  sidebar.container = container;
+  sidebar.isVisible = true;
+
+  sidebar.updateMessages();
+  assert.equal(container.style.display, 'none');
+
+  messages.push({
+    id: 'u1',
+    text: 'First message',
+    element: { isConnected: true }
+  });
+  sidebar.updateMessages();
+  assert.equal(container.style.display, 'block');
+});
+
 test('SidebarUI detects dark mode from html data-mode attribute', () => {
   const { SidebarUI, sandbox } = loadSidebar();
   sandbox.window.matchMedia = () => ({ matches: true });

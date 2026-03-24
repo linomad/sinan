@@ -592,9 +592,12 @@ class SidebarUI {
 
   toggleVisibility() {
     this.isVisible = !this.isVisible;
-    if (this.container) {
-      this.container.style.display = this.isVisible ? 'block' : 'none';
-    }
+    this.syncContainerVisibility();
+  }
+
+  syncContainerVisibility() {
+    if (!this.container) return;
+    this.container.style.display = (this.isVisible && this.hasMessages) ? 'block' : 'none';
   }
 
   destroy() {
@@ -631,6 +634,7 @@ class SidebarUI {
     this.hasMessages = messages.length > 0;
     const messageIds = new Set(messages.map(message => message.id));
     this.syncTransientState(messageIds);
+    this.syncContainerVisibility();
 
     if (messages.length === 0) {
       listContainer.innerHTML = '<div class="empty-state">No user messages found</div>';
