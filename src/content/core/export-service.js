@@ -106,14 +106,40 @@ class ChatNavExportService {
 
   static buildFileNameForTurns(turns, meta) {
     const validTurns = ChatNavExportService.normalizeTurns(turns);
-    const source = ChatNavExportService.normalizeForFileName(meta.source || 'chat');
+    const platform = ChatNavExportService.getPlatformIdentifier(meta.source);
     const stamp = ChatNavExportService.formatTimeStamp(meta.exportedAt);
+
     if (validTurns.length > 1) {
-      return `sinan-${source}-${stamp}-selected-${validTurns.length}.md`;
+      return `sinan-${platform}-${stamp}-selected-${validTurns.length}.md`;
     }
 
-    const snippet = ChatNavExportService.normalizeForFileName((validTurns[0]?.user?.text || '').slice(0, 32)) || 'message';
-    return `sinan-${source}-${stamp}-${snippet}.md`;
+    const topicMaxLen = 40;
+    let topic = ChatNavExportService.normalizeForFileName((validTurns[0]?.user?.text || '').slice(0, topicMaxLen)) || 'message';
+    const fullText = (validTurns[0]?.user?.text || '').trim();
+    if (fullText.length > topicMaxLen) {
+      topic = topic.slice(0, topicMaxLen - 3) + '...';
+    }
+    return `sinan-${platform}-${stamp}-${topic}.md`;
+  }
+
+  static getPlatformIdentifier(source) {
+    const hostname = (source || '').toLowerCase().replace(/^www\./, '');
+    const platformMap = {
+      'chat.openai.com': 'chatgpt',
+      'chatgpt.com': 'chatgpt',
+      'claude.ai': 'claude',
+      'gemini.google.com': 'gemini',
+      'deepseek.com': 'deepseek',
+      'chat.deepseek.com': 'deepseek',
+      'kimi.moonshot.cn': 'kimi',
+      'kimi.com': 'kimi',
+      'perplexity.ai': 'perplexity',
+      'qwen.ai': 'qwen',
+      'tongyi.aliyun.com': 'qwen',
+      'yuanbao.tencent.com': 'yuanbao',
+      'doubao.com': 'doubao',
+    };
+    return platformMap[hostname] || ChatNavExportService.normalizeForFileName(hostname.split('.')[0] || 'chat');
   }
 
   static downloadFile(fileName, content) {
@@ -158,7 +184,7 @@ class ChatNavExportService {
     const dd = String(d.getDate()).padStart(2, '0');
     const hh = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
-    return `${yyyy}${mm}${dd}-${hh}${min}`;
+    return `${yyyy}${mm}${dd}${hh}${min}`;
   }
 
   static normalizeForFileName(value) {
