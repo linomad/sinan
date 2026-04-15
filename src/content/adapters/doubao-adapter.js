@@ -18,21 +18,15 @@ class DoubaoAdapter extends BaseAdapter {
   }
 
   getScrollContainer() {
-    // Priority 1: The container explicitly marked as scroll view or message list
-    const candidates = [
-        '[data-testid="scroll_view"]',
-        '[data-testid="message-list"]',
-        '.scroll-view',
-        '.scrollable'
-    ];
-
-    for (const selector of candidates) {
-        const el = document.querySelector(selector);
-        if (el) return el;
+    // Priority 1: Doubao's main chat scroll container (uses flow-scrollbar + overflow-y-auto)
+    // Note: Doubao removed all data-testid attributes, so we use class-based selectors
+    const flowScrollbar = document.querySelector('div.flow-scrollbar[class*="overflow-y-auto"]');
+    if (flowScrollbar && flowScrollbar.scrollHeight > window.innerHeight) {
+        return flowScrollbar;
     }
-    
+
     // Priority 2: Generic scrollable div check
-    const scrollableDiv = document.querySelector('div[class*="overflow-y-auto"], div[class*="scroll"]');
+    const scrollableDiv = document.querySelector('div[class*="overflow-y-auto"]');
     if (scrollableDiv && scrollableDiv.scrollHeight > window.innerHeight) {
         return scrollableDiv;
     }
@@ -42,16 +36,14 @@ class DoubaoAdapter extends BaseAdapter {
 
   getUserMessages() {
     const messages = [];
-    // User provided selector
-    const userElements = document.querySelectorAll('[data-testid="send_message"]');
+    // Doubao removed data-testid attributes. User messages have data-message-id
+    // and their own class includes 'justify-end' (right-aligned bubbles).
+    const userElements = document.querySelectorAll('[data-message-id][class*="justify-end"]');
 
     userElements.forEach((el, index) => {
-      // Strategy: Use stable data-message-id if available, fallback to index
-      // Doubao puts data-message-id on the inner [data-testid="message_content"]
-      const contentEl = el.querySelector('[data-testid="message_content"]');
-      const stableId = contentEl ? contentEl.getAttribute('data-message-id') : null;
-      
-      // Construct a unique ID. 
+      const stableId = el.getAttribute('data-message-id');
+
+      // Construct a unique ID.
       // If we have a stable ID, use it (e.g. "chat-nav-uid-37123...").
       // Otherwise fallback to index (e.g. "chat-nav-idx-0").
       const navId = stableId ? `chat-nav-uid-${stableId}` : `chat-nav-idx-${index}`;
@@ -63,11 +55,7 @@ class DoubaoAdapter extends BaseAdapter {
         el.id = navId;
       }
 
-      // Try to find the specific text content div for cleaner extraction
-      const textEl = el.querySelector('[data-testid="message_text_content"]');
-      
-      let text = textEl ? textEl.innerText : el.innerText;
-      text = (text || "").trim().replace(/\n+/g, " ");
+      let text = (el.innerText || "").trim().replace(/\n+/g, " ");
 
       if (text) {
         messages.push({
@@ -83,26 +71,28 @@ class DoubaoAdapter extends BaseAdapter {
 
   getAssistantMessages() {
     const messages = [];
-    const assistantElements = document.querySelectorAll('[data-testid="receive_message"]');
+    // Doubao removed data-testid attributes. Assistant messages have data-message-id
+    // but do NOT have 'justify-end' in their class (they are left-aligned).
+    const allMsgElements = document.querySelectorAll('[data-message-id]');
+    const assistantElements = Array.from(allMsgElements).filter(
+      el => !el.className.includes('justify-end')
+    );
 
     assistantElements.forEach((el, index) => {
-      const contentEl = el.querySelector('[data-testid="message_content"]');
-      const stableId = contentEl ? contentEl.getAttribute('data-message-id') : null;
+      const stableId = el.getAttribute('data-message-id');
       const navId = stableId ? `chat-nav-assistant-uid-${stableId}` : `chat-nav-assistant-idx-${index}`;
 
       if (el.id !== navId) {
         el.id = navId;
       }
 
-      const textEl = el.querySelector('[data-testid="message_text_content"]');
-      let text = textEl ? textEl.innerText : el.innerText;
-      text = (text || "").trim().replace(/\n+/g, " ");
+      let text = (el.innerText || "").trim().replace(/\n+/g, " ");
 
       if (text) {
         messages.push({
           id: navId,
           text,
-          html: textEl ? (textEl.innerHTML || '') : '',
+          html: el.innerHTML || '',
           element: el
         });
       }
